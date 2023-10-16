@@ -1,6 +1,12 @@
 import pygame
 import numpy as np 
 import math
+from grass import Grass
+from boost import Boost
+from lava import Lava
+from road import Road
+from checkpoint import Checkpoint
+import track
 
 MAX_ANGLE_VELOCITY = 0.05
 MAX_ACCELERATION = 0.50
@@ -49,25 +55,45 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pass
     
     def update_position(self, string, screen):
-        f = 0.3
+
+        boosting = False
+
         theta_v = math.atan2(self.velocity[1], self.velocity[0])
-
-
-
-
-        self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
-        vel = self.acceleration + np.linalg.norm(self.velocity)
-        self.velocity[0] = vel * np.cos(self.orientation)
-        self.velocity[1] = vel * np.sin(self.orientation)
 
         #Bound the position to the screen. Account for the position being the top left of the rectangle. Adapt if switching from rec to pic maybe.
         self.position[0] = (self.position[0], self.position[0] + self.velocity[0])[self.position[0] + self.velocity[0]>0 and self.position[0] + self.velocity[0] < screen.get_size()[0]-20]
         self.position[1] = (self.position[1], self.position[1] + self.velocity[1])[self.position[1] + self.velocity[1]>1 and self.position[1] + self.velocity[1] < screen.get_size()[1]-20]
+        
+        screen_pixel = (screen.get_at((int(self.position[0]), int(self.position[1]))))[0:3]
+        if screen_pixel == Grass.color:
+            f = Grass.surface_type
+        elif screen_pixel == Boost.color:
+            f = Boost.surface_type
+            boosting = True
+        elif screen_pixel == Road.color:
+            f = Road.surface_type
+        elif screen_pixel == Lava.color:
+            f = 0.6
+        elif screen_pixel == Checkpoint.color:
+            f = 0.02
 
-        print(screen.get_at((int(self.position[0]), int(self.position[1]))))
-        print(self.position)
-        print(screen.get_size()[0])
-        print(screen.get_size()[1])
+        self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
+        vel = self.acceleration + np.linalg.norm(self.velocity)
+        if (not boosting):
+            self.velocity[0] = vel * np.cos(self.orientation)
+            self.velocity[1] = vel * np.sin(self.orientation)
+        else:
+            self.velocity[0] = 25 * np.cos(self.orientation)
+            self.velocity[1] = 25 * np.sin(self.orientation)
+       
+
+        print(f)
+
+        
+
+
+
+
 
         
         self.acceleration_c = 0

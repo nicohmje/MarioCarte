@@ -1,11 +1,17 @@
+import track
+import pygame
+
 class Road():  # Vous pouvez ajouter des classes parentes
-    
+    surface_type = 0
+    color = (0, 0, 0)
+
     def __init__(self, x, y):
-        # A completer
+        self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
+        self.surface_type = 0.02
         pass
     
-    def draw(self, sreen):
-        # A completer
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)    
         pass
     
     # A completer
