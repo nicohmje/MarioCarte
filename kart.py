@@ -7,8 +7,9 @@ from lava import Lava
 from road import Road
 from checkpoint import Checkpoint
 import track
+import time
 
-MAX_ANGLE_VELOCITY = 0.05
+MAX_ANGLE_VELOCITY = 0.15
 MAX_ACCELERATION = 0.50
 
 
@@ -21,10 +22,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.has_finished = False
         self.controller = controller
         self.position = [0,0]
+        self.checkpoint = 0 
+        self.checkpoint_pos = [0,0]
         self.velocity = [0,0]
         self.acceleration = 0
         self.acceleration_c = 0
-
+        self.start_time = time.time_ns()
+        self.end_time = 0.0
         self.orientation = 0
         #self.rotational_velocity = 0
         #self.rotational_acceleration = 0
@@ -67,35 +71,50 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         screen_pixel = (screen.get_at((int(self.position[0]), int(self.position[1]))))[0:3]
         if screen_pixel == Grass.color:
             f = Grass.surface_type
-        elif screen_pixel == Boost.color:
+        elif screen_pixel== Boost.color:
             f = Boost.surface_type
             boosting = True
         elif screen_pixel == Road.color:
             f = Road.surface_type
+
         elif screen_pixel == Lava.color:
-            f = 0.6
-        elif screen_pixel == Checkpoint.color:
-            f = 0.02
+            f = Checkpoint.surface_type
+            print("LAVA")
+            self.position = np.copy(self.checkpoint_pos)
+            self.velocity = np.copy([0.,0.])
+            
+        elif screen_pixel[0:2] == Checkpoint.color[0:2]:
+            f = Checkpoint.surface_type
+            cur_checkpoint = (screen_pixel[2] - Checkpoint.color[2])+1
+            
+            if cur_checkpoint > self.checkpoint + 1:
+                print("Skipped checkpoint")
+                return
+
+            if cur_checkpoint == 4:
+                self.end_time = time.time_ns()
+                time_took = self.end_time - self.start_time
+                print("Finished in", time_took*1e-9)
+                self.position = np.copy([50.,50.])
+                self.checkpoint = 0
+
+            if cur_checkpoint>self.checkpoint:
+                print("Checkpoint reached:", cur_checkpoint)
+                self.checkpoint = cur_checkpoint
+                self.checkpoint_pos[0] = np.copy(self.position[0])
+                self.checkpoint_pos[1] = np.copy(self.position[1])
+            
+                
 
         self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
-        vel = self.acceleration + np.linalg.norm(self.velocity)
+        vel = self.acceleration + np.linalg.norm(self.velocity) 
         if (not boosting):
             self.velocity[0] = vel * np.cos(self.orientation)
             self.velocity[1] = vel * np.sin(self.orientation)
         else:
             self.velocity[0] = 25 * np.cos(self.orientation)
             self.velocity[1] = 25 * np.sin(self.orientation)
-       
 
-        print(f)
-
-        
-
-
-
-
-
-        
         self.acceleration_c = 0
         pass
     
@@ -108,6 +127,14 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         # Draw a circle
         # pygame.draw.rect(screen, (255, 255, 255), kart_position, kart_radius)
 
-        pygame.draw.rect(screen, (255,255,0), (kart_position, (kart_radius, kart_radius)))
+        pygame.draw.circle(screen, (255,255,0), kart_position, kart_radius)
+
+        circle_pos=[0,0]
+        circle_pos[0] = kart_position[0] + (15 * np.cos(self.orientation))
+        circle_pos[1] = kart_position[1] + (15 * np.sin(self.orientation))
+
+        pygame.draw.circle(screen, (0,0,0), circle_pos, kart_radius/5.)
+
+
 
     # Completer avec d'autres methodes si besoin (ce sera probablement le cas)

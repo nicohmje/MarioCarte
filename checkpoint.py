@@ -4,12 +4,13 @@ import pygame
 class Checkpoint():  # Vous pouvez ajouter des classes parentes
     surface_type = 0
     color = (50, 50, 0)
-    id = -1
+    id = 0
 
     def __init__(self, x, y, id):
         self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
         self.surface_type = 0.02
         self.id = id
+        self.color = (50, 50, id)
         pass
     
     def draw(self, screen):
