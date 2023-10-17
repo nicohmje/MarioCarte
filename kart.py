@@ -40,6 +40,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.start_time = time.time_ns()
         self.end_time = 0.0
 
+        self.map = np.empty((10000,10000), dtype=str)
+
         self.initialized = False
 
         self.best_time = 0.0
@@ -91,44 +93,57 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.checkpoint_nbr = 3
             if 'F' in string:
                 self.checkpoint_nbr = 4
-            self.initialized = True
             
+            i,j = 0,0
+            for char in string:
+                if char.isalpha():
+                    self.map[i,j] = char
+                if char == "\n":
+                    j += 1
+                    i = 0
+                else:
+                    i += 1
+            self.map = self.map[0:i+1, 0:j+1]
+            self.initialized = True
 
-
-        screen_pixel = (screen.get_at((int(self.position[0]), int(self.position[1]))))[0:3]
-
-        if screen_pixel == Grass.color:
+        string_letter = ord(self.map[int(np.floor(self.position[0]/track.BLOCK_SIZE)), int(np.floor(self.position[1]/track.BLOCK_SIZE))])
+       
+        if string_letter == ord('G'):
             f = Grass.surface_type
 
-        elif screen_pixel== Boost.color:
+        elif string_letter == ord('B'):
             f = Boost.surface_type
             boosting = True
 
-        elif screen_pixel == Road.color:
+        elif string_letter == ord('R'):
             f = Road.surface_type
 
-        elif screen_pixel == Lava.color:
+        elif string_letter == ord('L'):
             f = Checkpoint.surface_type
             print("LAVA")
             self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient)
 
-        elif screen_pixel[0:2] == Checkpoint.color[0:2]:
+        elif (string_letter >= ord('C') and string_letter <= ord('F')):
             f = Checkpoint.surface_type
 
-            cur_checkpoint = (screen_pixel[2] - Checkpoint.color[2])+1
+
+            cur_checkpoint = (string_letter - ord('C')) + 1
                         
             if cur_checkpoint > self.checkpoint + 1:
                 pass
             elif cur_checkpoint == self.checkpoint_nbr:
                 self.end_time = time.time_ns()
+
                 #self.has_finished = True
+
                 time_took = self.end_time - self.start_time
                 if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
                     self.best_time = time_took*1e-9
+
                 print("Finished in", time_took*1e-9, "s")
                 self.start_time = time.time_ns()
                 self.reset([150,150], 0)
-                self.checkpoint = 0 #THIS ONE HERE
+                self.checkpoint = 0
                 print(self.checkpoint)
                 pass
             elif cur_checkpoint>self.checkpoint:
@@ -139,17 +154,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.checkpoint_pos[1] = np.copy(self.position[1])
                 self.checkpoint_orient = np.copy(self.orientation)
             
-                
 
         self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
         vel = self.acceleration + np.linalg.norm(self.velocity) 
-        if (not boosting):
-            self.velocity[0] = vel * np.cos(self.orientation)
-            self.velocity[1] = vel * np.sin(self.orientation)
-        else:
-            self.velocity[0] = 25 * np.cos(self.orientation)
-            self.velocity[1] = 25 * np.sin(self.orientation)
-
+       
+        self.velocity[0] = (vel * np.cos(self.orientation), 25 * np.cos(self.orientation))[boosting]
+        self.velocity[1] = (vel * np.sin(self.orientation), 25 * np.sin(self.orientation))[boosting]
+        
         status_checkpoint_str = "Checkpoint: " + str(self.checkpoint)
         font = pygame.font.SysFont(None, size=36)  # You can adjust the size as needed
         text = font.render(status_checkpoint_str, True, (0,0,0))
@@ -157,11 +168,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         text_rect.center = (95, 27)  # Adjust the position as needed
         screen.blit(text, text_rect)
 
+
         font = pygame.font.SysFont(None, size=60)  # You can adjust the size as needed
         if (((time.time_ns() - self.start_time)*1e-9)> self.best_time) : 
             color = (255, 30, 30)
         else:
             color = (0, 0, 0)
+            
         text = font.render(("%0.2f s" % ((time.time_ns() - self.start_time)*1e-9)), True, color)
         text_rect = text.get_rect()
         text_rect.center = (screen.get_size()[0]//2, screen.get_size()[1]//2)  # Adjust the position as needed
@@ -172,8 +185,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         text_rect = text.get_rect()
         text_rect.center = (screen.get_size()[0]//2, screen.get_size()[1]//2+100)  # Adjust the position as needed
         screen.blit(text, text_rect)
-
-        
 
         self.acceleration_c = 0
         pass
