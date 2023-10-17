@@ -4,6 +4,9 @@ from boost import Boost
 from lava import Lava
 from road import Road
 
+import time 
+import numpy as np
+
 import pygame
 
 BLOCK_SIZE = 50
@@ -151,8 +154,12 @@ class Track(object):
         
         # Boucle while pour le deroulement de la partie
         running = True
+        framerate = []
         compteur = 0
         while running:
+
+
+            start_loop = time.time_ns()
 
             # Fermeture de la fenetre
             for event in pygame.event.get():
@@ -199,7 +206,16 @@ class Track(object):
             # On incremente le compteur
             compteur += 1
 
+
+            
+            framerate.append(1/((time.time_ns() - start_loop)*1e-9))
+            if (not compteur%100):
+                print(np.mean(framerate))
+                framerate = []
+
+
         print("Fini en", compteur, "etapes !")
+        print("Framerate :", np.mean(framerate))
 
         # On ferme la fenetre a la fin du circuit
         pygame.quit()

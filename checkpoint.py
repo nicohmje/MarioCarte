@@ -1,5 +1,6 @@
 import track
 import pygame
+from grass import Grass
 
 class Checkpoint():  # Vous pouvez ajouter des classes parentes
     surface_type = 0.02
@@ -14,6 +15,7 @@ class Checkpoint():  # Vous pouvez ajouter des classes parentes
         pass
     
     def draw(self, screen):
-        pygame.draw.rect(screen, self.color, self.rect) 
+        if (Grass.texture_image is None):
+            pygame.draw.rect(screen, self.color, self.rect) 
         pass    
     # A completer
