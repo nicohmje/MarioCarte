@@ -2,7 +2,7 @@ import pygame
 import track
 
 class Lava():  # Vous pouvez ajouter des classes parentes
-    surface_type = 0
+    surface_type = 0.02
     color = (255, 0, 0)
 
     def __init__(self, x, y):
