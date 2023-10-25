@@ -159,7 +159,7 @@ class Track(object):
         while running:
 
 
-            start_loop = time.time_ns()
+            start_loop = time.time_ns() ##CUSTOM
 
             # Fermeture de la fenetre
             for event in pygame.event.get():
@@ -207,7 +207,7 @@ class Track(object):
             compteur += 1
 
 
-            
+            ##CUSTOM
             framerate.append(1/((time.time_ns() - start_loop)*1e-9))
             if (not compteur%100):
                 print(np.mean(framerate))
@@ -215,7 +215,7 @@ class Track(object):
 
 
         print("Fini en", compteur, "etapes !")
-        print("Framerate :", np.mean(framerate))
+        print("Framerate :", np.mean(framerate)) ##CUSTOM
 
         # On ferme la fenetre a la fin du circuit
         pygame.quit()

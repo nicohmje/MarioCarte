@@ -1,6 +1,8 @@
 import pygame
 import numpy as np
 import track
+
+
 class Grass():  # Vous pouvez ajouter des classes parentes
 
     surface_type = 0.2

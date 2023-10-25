@@ -2,6 +2,9 @@ from PIL import Image
 import numpy as np 
 
 
+### This very rudimentary tool transcribes an image into the corresponding string.
+### Needs some love, is very very very basic.
+
 track_image = Image.open('track.png')
 
 track_image_arr = np.array(track_image)

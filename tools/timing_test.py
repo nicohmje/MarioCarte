@@ -1,6 +1,10 @@
 import time
 import numpy as np
 
+### THIS EXISTS TO TEST OUT THE EXECUTION TIME OF DIFFERENT FUNCTIONS 
+### Example: using lists vs np.arrays() 
+
+
 start_time = time.time_ns()
 
 i=0
