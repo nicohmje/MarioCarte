@@ -6,10 +6,11 @@ import track
 class Grass():  # Vous pouvez ajouter des classes parentes
 
     surface_type = 0.2
-    color = (150,196,132)
+    color = (70,142,145)
     nbr_of_grass = 0 
 
-    texture_image = None
+    track_texture = None
+    grass_texture = None
         
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
@@ -21,22 +22,30 @@ class Grass():  # Vous pouvez ajouter des classes parentes
         pass
     
     def draw(self, screen):
-        if (self.grass_nbr == 0 and not (Grass.texture_image is None)):
-            screen.blit(Grass.texture_image, (0,0))
+        if (self.grass_nbr == 0 and not (Grass.track_texture is None)):
+            screen.blit(Grass.track_texture, (0,0))
             return
         
-        elif (self.grass_nbr == Grass.nbr_of_grass-1 and Grass.texture_image is None):
+        # if (self.grass_texture is None):
+        #     Grass.grass_texture = pygame.image.load("textures/grass_three.png").convert()
+        #     Grass.grass_texture = pygame.transform.scale(Grass.grass_texture, (track.BLOCK_SIZE, track.BLOCK_SIZE))
+
+        if (Grass.track_texture is None):
+            pygame.draw.rect(screen, self.color, self.rect)    
+            pass
+
+    
+        elif (self.grass_nbr == Grass.nbr_of_grass-1 and Grass.track_texture is None):
             pygame.draw.rect(screen, self.color, self.rect)    
             print("saved track")
             #time.sleep(0.02)
             pygame.image.save(screen, "track.png")
-            Grass.texture_image = pygame.image.load("track.png").convert()
-            screen.blit(Grass.texture_image, (0,0))
+            Grass.track_texture = pygame.image.load("track.png").convert()
+            screen.blit(Grass.track_texture, (0,0))
             self.color = (255,255,255)
             pass
-        elif (Grass.texture_image is None):
-            pygame.draw.rect(screen, self.color, self.rect)    
-            pass
+
+        
 
         pass
     

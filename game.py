@@ -13,6 +13,9 @@ def splash_screen(screen, texture, started):
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             screen = pygame.display.set_mode(dimensions)
             return True
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            pygame.quit()
+            return False
         pygame.display.flip()
         time.sleep(1./30.)
 

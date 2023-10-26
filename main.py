@@ -74,7 +74,7 @@ GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 # GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"""
 
 # La position et l'orientation initiale du kart
-initial_position = [150, 150]
+initial_position = [150., 150.]
 initial_angle = 0
 
 controller =  Human()  # ou AI()
