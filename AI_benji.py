@@ -6,24 +6,6 @@ import time
 import math
 from Mapping import mapping
 
-track_string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
-GRRRRRRCRRRRRRRRRBRRRRRRRG
-GRRRRRRCRRRRRRRRRBRRRRRRRG
-GRRRRRRCRRRRRRRRRRRRRRRRRG
-GRRRRRRCRRRRRRRRRRRRRRRRRG
-GGGGGGGGGGGGGGGGGGGGGRRRRG
-GGGGGGGGGGGGGGGGGGGGGRRRRG
-GRRRRGGGGGGGGGGGGGGGGRRRRG
-GFFRRGGGGGGGGGGGGGGGGRRRRG
-GLRRRGGGGGGGGGGGGGGGGRRRRG
-GRRRRGGGGGGGGGGGGGGGGDDDDG
-GRRRRRERRRRRRRBRRRRRRRRLLG
-GRRRRRERRRRRRRBRRRRRRRRRRG
-GLRRRRERRRRRGGBRRRRRRRRRRG
-GLLRRRERRRRRGGBRRRRRRRRRRG
-GGGGGGGGGGGGGGGGGGGGGGGGGG"""
-
-
 # track_string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
 # GRRRRRRCRRRRRRRRRBRRRRRRRG
 # GRRRRRRCRRRRRRRRRBRRRRRRRG
@@ -41,27 +23,49 @@ GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 # GLLRRRERRRRRGGBRRRRRRRRRRG
 # GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 
+track_string = """GGGGGG
+GRRRRG
+GRRRRG
+GRRRRG
+GRRRRG
+GCCCCG
+GRRRRG
+GRRRRG
+GRRRBG
+GRRRRG
+GDDDDG
+GRRRRG
+GEEEEG
+GRRRRG
+GRRRRG
+GFFFFG
+GGGGGG"""
+
 track = mapping(track_string)
 #plt.imshow(track)
 #plt.show()
+fig, ax = plt.subplots()
+
+
 
 
 ### Initializing qtable :
 largeur = track.shape[1]
 hauteur = track.shape[0]
 
+ax.imshow(track, extent=[0, largeur, -1*hauteur, 0])
+
 qtable = np.zeros([hauteur,largeur,9])
-qtable.shape
 
 #Setting number of episodes
-total_episodes=10000
+total_episodes=1000
 # Set the seed
 seed=14675
 rng = np.random.default_rng(seed)
 
 #Definition of kart's position and orientation
-pos_ini = np.array([150.,150.])
-angle_ini = np.pi/2.
+pos_ini = np.array([100.,100.])
+angle_ini = 0.
 f = 0.02
 #Definition of accelerations
 MAX_ANGLE_VELOCITY = 0.05
@@ -180,7 +184,7 @@ def rewarding(position,prec_pos,road_block):
     if np.any(position!=prec_pos):
         match road_block:
             case 'R':
-                return 0.
+                return 10.
             case'X':
                 return 500.
             case'Y':
@@ -198,13 +202,13 @@ def rewarding(position,prec_pos,road_block):
             case 'L':
                 return -10000.
             case'A':
-                return 100.
+                return 2000.
             case 'B':
                 return 300.
             case 'AS':
-                return 500.
+                return 2000.
             case 'ASP':
-                return 100.
+                return 2000.
             case _:
                 return 0.
             
@@ -259,11 +263,12 @@ decay_rate=0.0001
 kart = Kart()
 kart.create_map(track)
 
-max_epsilon = 1.0
+max_epsilon = 0.9
 min_epsilon = 0.001
-max_command = 500
+max_command = 1000
 
-command_nbr_avg = RollingAverage(30)
+#command_nbr_avg = RollingAverage(30)
+start = time.time()
 
 action_map = {
     0: (MAX_ACCELERATION, - MAX_ANGLE_VELOCITY ),
@@ -278,9 +283,9 @@ action_map = {
 }
 
 #Defining the maximum coordinates used later to pursue training
-command_max = 0
-max_pos = np.array([0.,0.])
-max_orient = 0.
+# command_max = 0
+# max_pos = np.array([0.,0.])
+# max_orient = 0.
 
 for episode in range(total_episodes):
     # print('New episode beginning : number',episode)
@@ -288,17 +293,18 @@ for episode in range(total_episodes):
     pos_x = []
     pos_y = []
     
-    start_time_ns = time.time_ns()
+    #start_time_ns = time.time_ns()
     
     #Reseting the environnement
     
     command = 0
     total_rewards = 0
-    kart.reset(pos_ini, np.pi/2.)
+    kart.reset(pos_ini, angle_ini)
     
     #Definition of the parameters
     
     learning_rate=0.01+0.09*((total_episodes-episode)/total_episodes)
+    #learning_rate = 0.05
     
     
     for command in range(max_command):
@@ -306,21 +312,21 @@ for episode in range(total_episodes):
         exp_exp_tradeoff = random.random()
         #Saving the current position
         position = np.array([kart.position[0], kart.position[1]], dtype=int)
-        if command > command_max:
-            max_pos = np.copy(position)
-            max_orient = kart.orientation
-            command_max = command
+        # if command > command_max:
+        #     max_pos = np.copy(position)
+        #     max_orient = kart.orientation
+        #     command_max = command
 
 
         
         
         #This value decides whether we prefer exploitation or exploration (<eps -> exploration)
-        if exp_exp_tradeoff>epsilon:
+        if (exp_exp_tradeoff>epsilon) or (episode == total_episodes-1):
             action = np.argmax(qtable[position[0]][position[1]])
             #action = np.argmax(qtable[position[1]][position[0]])
             
         else:#Otherwise we chose a random action from the nine possible
-            if np.linalg.norm(kart.velocity)>10.:
+            if np.linalg.norm(kart.velocity)>15.:
                 action = random.randrange(9)#All choices available
             else:
                 action = random.randrange(3)#Consider only accelerating as the speed is too low
@@ -366,13 +372,17 @@ for episode in range(total_episodes):
         next_lig = int(np.copy(kart.position[0]))
         next_col = int(np.copy(kart.position[1]))
         next_position = np.array([next_lig,next_col])
-        qtable[position[0]][position[1]][action] += learning_rate*(reward + gamma*np.argmax(qtable[next_lig][next_col])-qtable[position[0]][position[1]][action])# update following Bellman's equation
+        best_next_action = np.argmax(qtable[next_lig][next_col])
+        qtable[position[0]][position[1]][action] += learning_rate*(reward + gamma*qtable[next_lig][next_col][best_next_action]-qtable[position[0]][position[1]][action])# update following Bellman's equation
         #qtable[position[1]][position[0]][action] += learning_rate*(reward + gamma*np.argmax(qtable[next_col][next_lig])-qtable[position[1]][position[0]][action])# update following Bellman's equation
 
         total_rewards += reward
         #if (not command%10):
             #print('block',road_block,'reward:',reward,'velocity:',np.linalg.norm(kart.velocity), 'action taken', commands[action],'number of steps in the current episode: ',command)
-        if (episode> (total_episodes-100) or episode<(100)):
+        
+        
+        if (episode> (total_episodes-10) or episode<(20)):
+        #if True : 
             pos_x.append(-1*kart.position[0])
             pos_y.append(kart.position[1])
 
@@ -383,28 +393,34 @@ for episode in range(total_episodes):
     # delta_s = (time.time_ns() - start_time_ns) * 1e-9
     if (not pos_y == []):
         if (300>=command>200):
-            plt.plot(pos_y, pos_x, label=episode,color='green')
+            ax.plot(pos_y, pos_x, label=episode,color='green')
         elif(400>=command>300):
-            plt.plot(pos_y, pos_x, label=episode,color='black')
+            ax.plot(pos_y, pos_x, label=episode,color='black')
         elif(500>=command>400):
-            plt.plot(pos_y, pos_x,label=episode,color='magenta')
+            ax.plot(pos_y, pos_x,label=episode,color='yellow')
         elif (200>=command>100):
-            plt.plot(pos_y, pos_x,color='yellow')
+            ax.plot(pos_y, pos_x,color='magenta')
         else:
-            plt.plot(pos_y, pos_x,color='blue')
+            ax.plot(pos_y, pos_x,color='blue')
 
     #Reduce epsilon as we progress       
     epsilon = min_epsilon + (max_epsilon - min_epsilon)*np.exp(-decay_rate*episode) 
 
     rewards.append(total_rewards)
-    if (not episode%(total_episodes/1000.)):
+    if (not episode%(total_episodes/100.)):
         print("Progress :", (episode/total_episodes)*100., "%")
+        end = time.time()
+        delay = end-start
+        ETA = 100.*(1.- episode/total_episodes)*delay
+        print('ETA : ',ETA, 's')
+        start = end
 
-plt.plot(pos_y, pos_x, color='red')
-plt.plot(max_pos[1],-1*max_pos[0], label = 'ultimate pos', marker = '+')
-plt.xlabel('x')
-plt.ylabel('y')
-plt.legend()
+ax.plot(pos_y, pos_x, color='red') #Corresponds to the trajectory the AI would take while playing
+#plt.plot(max_pos[1],-1*max_pos[0], label = 'ultimate pos', marker = '+')
+
+#ax.xlabel('x')
+#ax.ylabel('y')
+#plt.legend()
 #plt.axis('square')
 #plt.ylim([-170,0])
 #plt.xlim([0,60])
@@ -415,9 +431,13 @@ plt.title('Rewards en fonction du nombre d épisodes')
 plt.xlabel('episode')
 plt.ylabel('rewards')
 plt.show()
-print(command_max)
+#print(command_max)
 
 #idée : apprendre à partir du point le plus loin atteint (aka celui ayant le nombre de commande le plus élevé), comme ça on explore à partir de point différents, sinon on explore
 #juste au début, mais une fois avancé dans la map on ne fait plus qu'exploiter dans une zone inexplorée.
+
+#Memorizing best trajectory by adding distance between Xi and Xi+1 point
+
+#Need to add smthg that finds the end point
    
 

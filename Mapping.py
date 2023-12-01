@@ -187,8 +187,8 @@ def mapping(track_string):
 
 
     # Start and goal positions
-    start = (150, 150)
-    goal = (450, 150)
+    start = (100, 100)
+    goal = (760, 150)
 
     # Define block costs
     block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
@@ -208,25 +208,25 @@ def mapping(track_string):
         track_traj[X[0]][X[1]]=5
 
     ###Creating intermediate points to increase the learning
-    p = path.copy()
+    # p = path.copy()
 
-    num_elements_to_pop = int(0.99 * len(p))
-    elements_to_pop = random.sample(p, num_elements_to_pop)
+    # num_elements_to_pop = int(0.99 * len(p))
+    # elements_to_pop = random.sample(p, num_elements_to_pop)
 
-    for element in elements_to_pop:
-        p.remove(element)
+    # for element in elements_to_pop:
+    #     p.remove(element)
 
-    j =[]
-    k =[]
-    for l in p:
-        j.append(l[0])
-        k.append(l[1])
+    # j =[]
+    # k =[]
+    # for l in p:
+    #     j.append(l[0])
+    #     k.append(l[1])
 
-    size = 20
-    for point in p:
+    size = 10
+    for point in path:
         for i in range(size):
             for j in range(size):
-                track_traj[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 180
+                track_traj[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 5
 
     return track_traj
 
