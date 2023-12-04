@@ -187,8 +187,8 @@ def mapping(track_string):
 
 
     # Start and goal positions
-    start = (100, 100)
-    goal = (760, 150)
+    start = (150, 150)
+    goal = (450, 150)
 
     # Define block costs
     block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
@@ -203,32 +203,40 @@ def mapping(track_string):
         print("No path found.")
 
     ###Adding A* info to the map
-    track_traj = np.copy(useable_track)
-    for X in path:
-        track_traj[X[0]][X[1]]=5
+
+    track_traj = np.copy(track_array)
+    track_passed = np.repeat(np.repeat(track_traj,50,axis=0),50,axis=1)
+    # for X in path:
+    #     track_traj[X[0]][X[1]]=5
 
     ###Creating intermediate points to increase the learning
-    # p = path.copy()
+    p = path.copy()
 
-    # num_elements_to_pop = int(0.99 * len(p))
-    # elements_to_pop = random.sample(p, num_elements_to_pop)
+    num_elements_to_pop = int(0.99 * len(p))
+    elements_to_pop = random.sample(p, num_elements_to_pop)
 
-    # for element in elements_to_pop:
-    #     p.remove(element)
+    for element in elements_to_pop:
+        p.remove(element)
 
-    # j =[]
-    # k =[]
-    # for l in p:
-    #     j.append(l[0])
-    #     k.append(l[1])
+    p.append(path[-1])
 
-    size = 10
-    for point in path:
+    j =[]
+    k =[]
+    for l in p:
+        j.append(l[0])
+        k.append(l[1])
+
+    size = 20
+    nbr = 0
+    for point in p:
         for i in range(size):
             for j in range(size):
-                track_traj[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 5
+                track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
+                nbr+=1
 
-    return track_traj
+    
+
+    return track_passed,p
 
 
 
