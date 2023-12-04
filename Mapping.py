@@ -206,25 +206,36 @@ def mapping(track_string):
 
     track_traj = np.copy(track_array)
     track_passed = np.repeat(np.repeat(track_traj,50,axis=0),50,axis=1)
-    # for X in path:
-    #     track_traj[X[0]][X[1]]=5
+
 
     ###Creating intermediate points to increase the learning
-    p = path.copy()
+    #p = path.copy()
 
-    num_elements_to_pop = int(0.99 * len(p))
-    elements_to_pop = random.sample(p, num_elements_to_pop)
+    p = []
+    x_ini = path[0]
+    p.append(x_ini)
+    for x in path:
+        if (np.absolute(x[0]-x_ini[0])+np.absolute(x[1]-x_ini[1])>150.):
 
-    for element in elements_to_pop:
-        p.remove(element)
+            p.append(x)
+            x_ini = x
+    p.append((450,150))
 
-    p.append(path[-1])
 
-    j =[]
-    k =[]
-    for l in p:
-        j.append(l[0])
-        k.append(l[1])
+
+    # num_elements_to_pop = int(0.99 * len(p))
+    # elements_to_pop = random.sample(p, num_elements_to_pop)
+
+    # for element in elements_to_pop:
+    #     p.remove(element)
+
+    # p.append(path[-1])
+
+    # j =[]
+    # k =[]
+    # for l in p:
+    #     j.append(l[0])
+    #     k.append(l[1])
 
     size = 20
     nbr = 0

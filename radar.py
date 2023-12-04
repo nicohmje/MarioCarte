@@ -47,8 +47,8 @@ GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 # GGGGGG"""
 
 track, path = mapping(track_string)
-# plt.imshow(track)
-# plt.show()
+plt.imshow(track)
+plt.show()
 fig, ax = plt.subplots()
 print(path)
 
@@ -214,44 +214,6 @@ class Kart():
                 print('removed :',p)
 
 
-
-
-
-        # for i in range(0, range_points + 1):
-        #     # Calculate the position of the point in front of the kart
-        #     x0_check = int(self.position[0] + i * np.cos(self.orientation + np.pi/2.))
-        #     y0_check = int(self.position[1] + i * np.sin(self.orientation + np.pi/2.))
-
-        #     x1_check = int(self.position[0] + i * np.cos(self.orientation - np.pi/2.))
-        #     y1_check = int(self.position[1] + i * np.sin(self.orientation - np.pi/2.))
-
-        #     # x2_check = int(self.position[0] + i * np.cos(self.orientation + np.pi/4.))
-        #     # y2_check = int(self.position[1] + i * np.sin(self.orientation + np.pi/4.))
-
-        #     # x3_check = int(self.position[0] + i * np.cos(self.orientation - np.pi/4.))
-        #     # y3_check = int(self.position[1] + i * np.sin(self.orientation - np.pi/4.))
-
-        #     # Check if the calculated position is within the map boundaries
-        
-            
-        #     block_value0 = self.map[x0_check, y0_check]
-        #     block_value1 = self.map[x1_check, y1_check]
-
-        #     radar_readings.append(block_value0)
-        #     radar_readings.append(block_value1)
-
-
-
-        #     pathing = set(self.path)
-        #     radar = set(radar_readings)
-        #     popping = radar.intersection(pathing)
-        #     if popping != set():
-        #         for r in popping:
-        #             self.path.remove(r-1000)
-            
-            
-
-        # return radar_readings
                 
         
 
@@ -296,7 +258,6 @@ fig, ax = plt.subplots()
 
 
 
-### Initializing qtable :
 largeur = track.shape[1]
 hauteur = track.shape[0]
 
@@ -326,14 +287,20 @@ while (not(success)):
     #next_theta = math.atan2(next_vec[0],next_vec[1])
     next_theta, norm = calculate_angle(kart.position,[px,py])
     delta = next_theta - kart.orientation
+    if delta>np.pi:
+        delta = delta - 2*np.pi
+
+    elif delta < -1*np.pi:
+        delta =  2*np.pi + delta 
+
     # if not(step%10):
     #     print('delta = ',delta)
     if delta >= 0:
         kart.turn_right()
-        print('virage a droite')
+        print('virage a gauche')
     elif delta < 0:
         kart.turn_left()
-        print('virage a gauche')
+        print('virage a droite')
 
     braking = kart.check_radar_speed(delta)
     
