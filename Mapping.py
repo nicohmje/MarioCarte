@@ -188,7 +188,7 @@ def mapping(track_string):
 
     # Start and goal positions
     start = (150, 150)
-    goal = (450, 150)
+    goal = (425, 75)
 
     # Define block costs
     block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}

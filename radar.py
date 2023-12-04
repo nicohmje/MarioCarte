@@ -50,7 +50,7 @@ class AI_PARSE():
 
         self.track_string = track_string
 
-        need_to_map = False
+        AI_PARSE.need_to_map = False
         try:
             track_string_file = np.load('track_string.npy')
         except:
@@ -67,13 +67,13 @@ class AI_PARSE():
                     self.command = np.load("ai_commands.npy")
                 except:
                     print("[INFO] AI COMMANDS NOT FOUND")
-                    need_to_map = True
+                    AI_PARSE.need_to_map = True
                 else:
                     self.command = np.load("ai_commands.npy")
                     print("[INFO] LOADED COMMANDS")
             else: 
                 print('[INFO] TRACK STRING HAS CHANGED')
-                need_to_map = True
+                AI_PARSE.need_to_map = True
                 
 
 
@@ -82,7 +82,7 @@ class AI_PARSE():
         # fig, ax = plt.subplots()
         # print(path)
 
-        if (need_to_map):
+        if (AI_PARSE.need_to_map):
             print("[INFO] STARTED MAPPING")
             AI_PARSE.track, AI_PARSE.path = mapping(track_string)
             self.command = []
@@ -95,8 +95,9 @@ class AI_PARSE():
 
     def parse(self):
 
-        if len(self.command) > 2:
-            return
+        # if len(self.command) > 2:
+            
+        #     return
 
         print("[INFO] STARTED FINDING PATH FOR AI")
         success = False

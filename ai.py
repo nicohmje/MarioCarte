@@ -11,7 +11,8 @@ class AI():
     def __init__(self, string):
         self.kart = None
         self.ai = AI_PARSE(string)
-        self.ai.parse()
+        if (AI_PARSE.need_to_map):
+            self.ai.parse()
         self.step = 0
 
     def reset(self):

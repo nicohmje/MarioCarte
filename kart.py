@@ -12,7 +12,7 @@ import time
 
 
 
-# ROAD MAP: ADD TRAIL (and boosting effect)
+# ROAD MAP: ADD TRAIL (and boosting effect) || FIX AI AND HUMAN || FIND FINISH LINE
 
 from common import Common
 
@@ -402,7 +402,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             dx = self.position[0] - px
             dy = self.position[1] - py
             dist = np.sqrt(dx**2 + dy**2)
-            if (dist<dist_min) and (p!=(450,150)) :
+            if (dist<dist_min) and (p!=(425,75)) :
                 self.path.remove(p)
                 # print('removed :',p)
 
