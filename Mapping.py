@@ -8,13 +8,13 @@ import math
 
 ###Defining usefull fonctions :
 def fenetre(position,track):
-    x = position[0]
-    y = position[1]
-    fenetre = np.zeros([3,3])
-    for i in range(3):
-        for j in range(3):
-            fenetre[i][j]=int(track[x+i][y+j])
-    return fenetre
+    x,y = position
+    # for i in range(3):
+    #     for j in range(3):
+    #         fenetre[i][j]=int(track[x+i][y+j])
+    # print(fenetre)
+    # time.sleep(100)
+    return np.array([track[x:x+3,y:y+3]]) 
 
 
 def heuristic(a, b):
@@ -157,17 +157,17 @@ def mapping(track_string):
                 corners_coord.append([w+2,h])
                 corners_coord.append([w+3,h+1])
                 corners_type.append(1)
-            if np.all(F == Corner_2):
+            elif np.all(F == Corner_2):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h])
                 corners_coord.append([w+1,h-1])
                 corners_type.append(2)
-            if np.all(F == Corner_3):
+            elif np.all(F == Corner_3):
                 corners_coord.append([w+3,h+1])
                 corners_coord.append([w+2,h+2])
                 corners_coord.append([w+1,h+3])
                 corners_type.append(3)
-            if np.all(F == Corner_4):
+            elif np.all(F == Corner_4):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h+2])
                 corners_coord.append([w+1,h+3])

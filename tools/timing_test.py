@@ -15,25 +15,21 @@ g = 1
 
 start_time = time.time_ns()
 
-for _ in range(iterations):
-    # match g:
-    #     case 1:
-    #         y = 2
-    #     case 2: 
-    #         y = 3
-    #     case 3: 
-    #         y = 5
-    #     case 4: 
-    #         y = 2
+a = np.array([2,3])
 
-    if g == 1:
-        y = 2
-    if g ==2:
-        y = 3
-    if g == 3:
-        y = 5
-    if g == 4:
-        y =2
+track = np.array([[2,3,3],[4,5,6],[3,5,6]])
+b = np.array([4,5])
+
+def fenetre_func(position):
+    # fenetre = np.zeros([3,3])    
+    # for i in range(3):
+    #     for j in range(3):
+    #         fenetre[i][j]=int(track[x+i][y+j])
+    # return fenetre
+    return np.array([track[position[0]:position[0]+3,position[1]:position[1]+3]]) 
+
+for _ in range(iterations):
+    fenetre_func([0,0])    
 
     
 print((time.time_ns() - start_time) * 1e-9)

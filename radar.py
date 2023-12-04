@@ -15,8 +15,8 @@ track_string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
 GRRRRRRCRRRRRRRRRBRRRRRRRG
 GRRRRRRCRRRRRRRRRBRRRRRRRG
 GRRRRRRCRRRRRRRRRRRRRRRRRG
-GRRRRRRCRRRRRRRRRRRRRRRRRG
-GGGGGGGGGGGGGGGGGGGGGRRRRG
+GRRRRRRCRRRRRRRRRRRRBBRRRG
+GGGGGGGGGGGGGGGGGGGGGBRRRG
 GGGGGGGGGGGGGGGGGGGGGRRRRG
 GRRRRGGGGGGGGGGGGGGGGRRRRG
 GFFRRGGGGGGGGGGGGGGGGRRRRG
@@ -27,6 +27,25 @@ GRRRRRERRRRRRRBRRRRRRRRRRG
 GLRRRRERRRRRGGBRRRRRRRRRRG
 GLLRRRERRRRRGGBRRRRRRRRRRG
 GGGGGGGGGGGGGGGGGGGGGGGGGG"""
+
+# track_string = """GGGGGGGGGGGGGGGGGGGGGGGG
+# GRRRRGRRRRRDBBRRRRGGGGGG
+# GRRRRGRRRRRDRRRRRRGGGGGG
+# GRRRRGRRRRRDRRRRRRGGGGGG
+# GRRRRGRRRRRDRRRRRRGGGGGG
+# GRRRRGRRRRGGGGRRRRGGGGGG
+# GRRRRGRRRRGGGGRRRRGGGGGG
+# GRRRRGRRRRGGGGRRRRGGGGGG
+# GRRRRGRRRRGGGGRRRRGGGGGG
+# GRRRRGBBBBGGGGEEEEGGGGGG
+# GRRRRGRRRRGGGGRRRRGGGGGG
+# GRRRRCRRRRGGGGRRRRRRRRFG
+# GRRRRCRRRRGGGGRRBRRRRRFG
+# GRRRRCRRRRGGGGRRRRRRRRFG
+# GRRRRCRRRRGGGGRRRRRRRRFG
+# GGGGGGGGGGGGGGGGGGGGGGGG"""
+
+start_time_ns = time.time_ns()
 
 # track_string = """GGGGGG
 # GRRRRG
@@ -47,8 +66,8 @@ GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 # GGGGGG"""
 
 track, path = mapping(track_string)
-# plt.imshow(track)
-# plt.show()
+plt.imshow(track)
+plt.show()
 fig, ax = plt.subplots()
 print(path)
 
@@ -67,7 +86,7 @@ ax.imshow(track, extent=[0, largeur, -1*hauteur, 0])
 
 #Definition of kart's position and orientation
 pos_ini = np.array([150.,150.])
-angle_ini = np.pi/2.
+angle_ini = 0.
 f = 0.02
 #Definition of accelerations
 MAX_ANGLE_VELOCITY = 0.05
@@ -123,43 +142,6 @@ class Kart():
         
         else:
             return 'a',boosting
-
-            # match self.map[X[0]][X[1]]:
-            #     case 255:
-            #         return 'R',boosting
-            #     case 101:
-            #         if (self.checkpoint<1):
-            #             self.checkpoint=1
-            #             return 'X', boosting
-            #         else: 
-            #             return 'C',boosting
-            #     case 102:
-            #         if (self.checkpoint<2):
-            #             self.checkpoint=2
-            #             return 'Y', boosting
-            #         else:
-            #             return 'D',boosting
-            #     case 103:
-            #         if (self.checkpoint<3):
-            #             self.checkpoint=3
-            #             return 'Z', boosting
-            #         else:
-            #             return 'E', boosting
-            #     case 104:
-            #         self.success = True
-            #         return 'F',boosting
-            #     case 0:
-            #         return 'G',boosting
-            #     case 10:
-            #         return 'A',boosting #stands for apex corner
-            #     case 200:
-            #         boosting = True
-            #         return 'B',boosting
-            #     case 5:
-            #         return 'AS',boosting #stands for A star trajectory
-            #     case 180:
-            #         return 'ASP', boosting #stands for A star points
-            
             
 
     def check_radar_speed(self,delta):
@@ -355,6 +337,7 @@ while (not(success)):
     if kart.map[x_][y_]==104:
         success = True
         print('Successfully finished the map')
+        print((time.time_ns() - start_time_ns)*1e-9)
         break
     step +=1
     #time.sleep(0.1)
