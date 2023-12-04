@@ -10,6 +10,10 @@ import track
 import game
 import time
 
+
+
+# ROAD MAP: ADD TRAIL (and boosting effect)
+
 from common import Common
 
 MAX_ANGLE_VELOCITY = 0.05
