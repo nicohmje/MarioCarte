@@ -19,6 +19,7 @@ def splash_screen(screen, texture, started):
         pygame.display.flip()
         time.sleep(1./30.)
 
+
 def countdown(screen, texture, started):
     print("started")
     dimensions = screen.get_size()
@@ -32,8 +33,6 @@ def countdown(screen, texture, started):
         pygame.display.flip()
         time.sleep(1./30.)
      
-        
-
 def get_key():
         time.sleep(0.02)
         return pygame.key.get_pressed()

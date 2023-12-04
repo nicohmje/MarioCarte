@@ -31,6 +31,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     splash_screen = None
     screen_size = None
 
+    sound = None
     started = False
 
 
@@ -64,8 +65,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.best_time = 0.0
 
         self.__input = 0 #1 FORW 2 LEFT 3 RIGHT 4 BACK
-
-
+        self.music_playing = False
         pass
        
     def reset(self, initial_position, initial_orientation):
@@ -137,6 +137,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 else:
                     i += 1
             self.map = self.map[0:i+1, 0:j+1]
+            pygame.mixer.music.load("sounds/grass.wav")
 
         if Kart.started:
             boosting = False    
@@ -151,11 +152,22 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.screen_size = screen.get_size()
 
             string_letter = ord(self.map[int(np.floor(self.position[0]/track.BLOCK_SIZE)), int(np.floor(self.position[1]/track.BLOCK_SIZE))])
-        
-            if string_letter == ord('G'):
+
+
+            if string_letter == ord('G') and not self.music_playing:
+                pygame.mixer.music.play(-1)
+                f = Grass.surface_type
+                self.music_playing = True
+            elif string_letter == ord('G') and self.music_playing:
                 f = Grass.surface_type
 
-            elif string_letter == ord('B'):
+            if not string_letter == ord('G') and self.music_playing :
+                print("stop")
+                pygame.mixer.music.fadeout(300)
+                self.music_playing = False
+            
+            if string_letter == ord('B'):
+                pygame.mixer.Sound.play(Boost.sound)
                 f = Boost.surface_type
                 boosting = True
 
@@ -163,8 +175,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 f = Road.surface_type
 
             elif string_letter == ord('L'):
+                pygame.mixer.Sound.play(Lava.sound)
                 f = Checkpoint.surface_type
-                print("LAVA")
                 self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient)
 
             elif (string_letter >= ord('C') and string_letter <= ord('F')):
@@ -177,7 +189,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 elif cur_checkpoint == self.checkpoint_nbr:
                     self.__end_time = time.time_ns()
 
-                    #self.has_finished = True
+                    self.has_finished = False
 
                     time_took = self.__end_time - self.start_time
                     if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
@@ -192,6 +204,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 elif cur_checkpoint>self.checkpoint:
 
                     print("Checkpoint reached:", cur_checkpoint)
+                    pygame.mixer.Sound.play(Checkpoint.sound)
                     self.checkpoint = cur_checkpoint
                     self.checkpoint_pos[0] = np.copy(self.position[0])
                     self.checkpoint_pos[1] = np.copy(self.position[1])
@@ -250,6 +263,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             else:
                 self.reset(self.checkpoint_pos, self.checkpoint_orient)
                 return
+            
             
             self.acceleration_c = 0
         pass

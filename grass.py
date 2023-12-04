@@ -6,11 +6,12 @@ import track
 class Grass():  # Vous pouvez ajouter des classes parentes
 
     surface_type = 0.2
-    color = (70,142,145)
+    color = (0, 147, 132)
     nbr_of_grass = 0 
 
     track_texture = None
     grass_texture = None
+    sound = None
         
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
@@ -23,22 +24,26 @@ class Grass():  # Vous pouvez ajouter des classes parentes
     
     def draw(self, screen):
         if (self.grass_nbr == 0 and not (Grass.track_texture is None)):
+
             screen.blit(Grass.track_texture, (0,0))
             return
         
-        # if (self.grass_texture is None):
-        #     Grass.grass_texture = pygame.image.load("textures/grass_three.png").convert()
-        #     Grass.grass_texture = pygame.transform.scale(Grass.grass_texture, (track.BLOCK_SIZE, track.BLOCK_SIZE))
+        if (self.grass_texture is None):
+            Grass.grass_texture = pygame.image.load("textures/grass_five.png").convert()
+            Grass.grass_texture = pygame.transform.scale(Grass.grass_texture, (track.BLOCK_SIZE, track.BLOCK_SIZE))
 
         if (Grass.track_texture is None):
-            pygame.draw.rect(screen, self.color, self.rect)    
+            screen.blit(Grass.grass_texture, self.rect)
+            Grass.sound = pygame.mixer.Sound("sounds/grass.wav")
+            # pygame.draw.rect(screen, self.color, self.rect)    
             pass
 
     
-        elif (self.grass_nbr == Grass.nbr_of_grass-1 and Grass.track_texture is None):
+        if (self.grass_nbr == Grass.nbr_of_grass-1 and Grass.track_texture is None): 
+            screen.blit(Grass.grass_texture, self.rect) 
             pygame.draw.rect(screen, self.color, self.rect)    
             print("saved track")
-            #time.sleep(0.02)
+            # time.sleep(0.02)
             pygame.image.save(screen, "track.png")
             Grass.track_texture = pygame.image.load("track.png").convert()
             screen.blit(Grass.track_texture, (0,0))

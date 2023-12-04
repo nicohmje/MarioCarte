@@ -17,5 +17,7 @@ class Checkpoint():  # Vous pouvez ajouter des classes parentes
     def draw(self, screen):
         if (Grass.track_texture is None):
             pygame.draw.rect(screen, self.color, self.rect) 
+            Checkpoint.sound = pygame.mixer.Sound("sounds/checkpoint.wav")
+
         pass    
     # A completer

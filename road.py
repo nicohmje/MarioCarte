@@ -4,7 +4,8 @@ from grass import Grass
 
 class Road():  # Vous pouvez ajouter des classes parentes
     surface_type = 0.02
-    color = (37, 41, 50)
+    color = (33, 41, 48)
+    sound = None
 
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
