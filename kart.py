@@ -18,6 +18,7 @@ from common import Common
 
 MAX_ANGLE_VELOCITY = 0.05
 MAX_ACCELERATION = 0.25
+BOOST_SPEED = 25.
 
 TEXT = True
 
@@ -70,12 +71,15 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__input = 0 #1 FORW 2 LEFT 3 RIGHT 4 BACK
         self.music_playing = False
+
         pass
        
     def reset(self, initial_position, initial_orientation):
         self.position = np.copy(initial_position)
         self.orientation = np.copy(initial_orientation)        
         self.velocity = np.array([0.,0.])
+        if self.initialized:
+            self.controller.reset()
 
         pass
         
@@ -340,4 +344,83 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
         self.__input = 0 
+
+    def check_radar_speed(self,delta):
+        braking = False
+        radar_readings = []
+        range_points = 10*int(np.linalg.norm(self.velocity))
+        if delta < 0.2 and (np.linalg.norm(self.velocity) < 15.):
+            return braking
+        elif np.linalg.norm(self.velocity) >= 15.:
+            braking = True
+            return braking
+        elif np.absolute(delta) > 0.6:
+            braking = True
+            return braking
+        
+
+        else:
+
+            for i in range(1, range_points + 2):
+                # Calculate the position of the point in front of the kart
+                x_check = int(self.position[0] + i * np.cos(self.orientation))
+                y_check = int(self.position[1] + i * np.sin(self.orientation))
+
+                # Check if the calculated position is within the map boundaries
+                if 0 <= x_check < self.map.shape[0] and 0 <= y_check < self.map.shape[1]:
+                    # Read the value at the calculated position
+                    block_value = self.map[x_check, y_check]
+                    radar_readings.append(block_value)
+                else:
+                    # If the position is outside the map, consider it as a wall
+                    radar_readings.append(0)
             
+            sr = set(radar_readings)
+            if (sr.intersection([0]) == set([0])):
+                braking = True
+                return braking
+            else:
+                return braking
+
+    def read_map(self):
+        boosting = False
+        X = np.array(self.position, dtype='int')
+
+        if self.map[X[0]][X[1]] == 200:
+            boosting = True
+            return 'ap',boosting
+        
+        else:
+            return 'a',boosting
+        
+    def radar_points(self):
+        
+        dist_min = 100
+        for p in self.path:
+            px = float(p[0])
+            py = float(p[1])
+            dx = self.position[0] - px
+            dy = self.position[1] - py
+            dist = np.sqrt(dx**2 + dy**2)
+            if (dist<dist_min) and (p!=(450,150)) :
+                self.path.remove(p)
+                # print('removed :',p)
+
+    def create_map(self,useable_array):
+        self.map = useable_array
+
+    def update_pos_AI(self):
+        _, boosting = self.read_map()
+        theta_v = math.atan2(self.velocity[1], self.velocity[0])
+        self.acceleration = self.acceleration_c - (0.02 * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
+        vel = self.acceleration + np.linalg.norm(self.velocity) 
+        
+        if (not boosting):
+                self.velocity = (vel * np.cos(self.orientation), vel*np.sin(self.orientation))
+        else:
+                self.velocity = (BOOST_SPEED * np.cos(self.orientation), BOOST_SPEED*np.sin(self.orientation))
+                        
+        self.position[0]+= self.velocity[0]
+        self.position[1]+= self.velocity[1]
+        self.acceleration_c = 0       
+        pass
