@@ -63,50 +63,9 @@ def astar(array, start, goal, block_costs):
                 fscore[neighbor] = gscore[neighbor] + heuristic(neighbor, goal)
 
                 if neighbor not in open_set:
-                    open_set.add(neighbor)
-
+                    open_set.add(neighbor)  
+                    
     return None
-
-
-
-
-###Importing the string representing the map:
-# track_string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
-# GRRRRRRCRRRRRRRRRBRRRRRRRG
-# GRRRRRRCRRRRRRRRRBRRRRRRRG
-# GRRRRRRCRRRRRRRRRRRRRRRRRG
-# GRRRRRRCRRRRRRRRRRRRRRRRRG
-# GGGGGGGGGGGGGGGGGGGGGRRRRG
-# GGGGGGGGGGGGGGGGGGGGGRRRRG
-# GRRRRGGGGGGGGGGGGGGGGRRRRG
-# GFFRRGGGGGGGGGGGGGGGGRRRRG
-# GLRRRGGGGGGGGGGGGGGGGRRRRG
-# GRRRRGGGGGGGGGGGGGGGGDDDDG
-# GRRRRRERRRRRRRBRRRRRRRRLLG
-# GRRRRRERRRRRRRBRRRRRRRRRRG
-# GLRRRRERRRRRGGBRRRRRRRRRRG
-# GLLRRRERRRRRGGBRRRRRRRRRRG
-# GGGGGGGGGGGGGGGGGGGGGGGGGG"""
-
-# track_string = """GGGGGG
-# GRRRRG
-# GRRRRG
-# GRRRRG
-# GRRRRG
-# GCCCCG
-# GRRRRG
-# GRRRRG
-# GRRRBG
-# GRRRRG
-# GDDDDG
-# GRRRRG
-# GEEEEG
-# GRRRRG
-# GRRRRG
-# GFFFFG
-# GGGGGG"""
-
-
 
 def mapping(track_string):
     ###Global Map*£¨%MP
@@ -119,9 +78,6 @@ def mapping(track_string):
 
     # Convert the list of lists to a NumPy array
     track_array = np.array(track_array, dtype=np.uint8)
-
-
-
 
     ###Finding the apexes:
     # Create a dictionary to map characters to values
@@ -219,23 +175,24 @@ def mapping(track_string):
 
             p.append(x)
             x_ini = x
-    p.append((450,150))
+
+    finish_positions = np.argwhere(track_array == 104)
+
+    finish_positions = finish_positions*50 + (25,25)
 
 
+    print("[INFO] Positions of the finish line: ")
+    print(finish_positions) 
 
-    # num_elements_to_pop = int(0.99 * len(p))
-    # elements_to_pop = random.sample(p, num_elements_to_pop)
+    finish = (0,0)
+    norm = 1e9
+    for i in finish_positions:
+        temp_norm = np.linalg.norm(p[-1] - i)
+        if (temp_norm < norm):
+            finish = (i[0],i[1])
+            norm = temp_norm
 
-    # for element in elements_to_pop:
-    #     p.remove(element)
-
-    # p.append(path[-1])
-
-    # j =[]
-    # k =[]
-    # for l in p:
-    #     j.append(l[0])
-    #     k.append(l[1])
+    p.append(finish)
 
     size = 20
     nbr = 0

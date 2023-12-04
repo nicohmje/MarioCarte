@@ -10,3 +10,6 @@ class Human():
     def move(self, string):
         time.sleep(0.02)
         return pygame.key.get_pressed()
+    
+    def reset(self):
+        pass

@@ -46,9 +46,11 @@ import pygame
 class AI_PARSE():  
 
     
-    def __init__(self, track_string):
+    def __init__(self, track_string,initial_position, initial_angle):
 
         self.track_string = track_string
+        self.pos_ini = initial_position
+        self.angle_ini = -1*initial_angle + np.pi/2.
 
         AI_PARSE.need_to_map = False
         try:
@@ -85,10 +87,16 @@ class AI_PARSE():
         if (AI_PARSE.need_to_map):
             print("[INFO] STARTED MAPPING")
             AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+            print(np.shape(AI_PARSE.path))
             self.command = []
             self.command.append([True, False, False, False])
             self.largeur = AI_PARSE.track.shape[1]
             self.hauteur = AI_PARSE.track.shape[0]
+            
+            self.kart = Kart(AI_PARSE.path)
+            self.kart.create_map(AI_PARSE.track)
+            self.kart.reset(self.pos_ini,self.angle_ini) 
+            self.kart.path = AI_PARSE.path 
 
 
         
@@ -109,10 +117,11 @@ class AI_PARSE():
             commanded_keys = [False, False, False, False]
 
             #Orientation control
+            print(np.shape(AI_PARSE.path))
             obj_pos = AI_PARSE.path[0]
             px = float(obj_pos[0])
             py = float(obj_pos[1])
-            next_theta, norm = self.calculate_angle(self.kart.position,[px,py])
+            next_theta, _ = self.calculate_angle(self.kart.position,[px,py])
             delta = next_theta - self.kart.orientation
             if delta>np.pi:
                 delta = delta - 2*np.pi
@@ -120,13 +129,13 @@ class AI_PARSE():
             elif delta < -1*np.pi:
                 delta =  2*np.pi + delta 
 
-
-            if delta >= 0:
-                self.kart.turn_right()
-                commanded_keys[-1] = True 
-            elif delta < 0:
-                self.kart.turn_left()
-                commanded_keys[-2] = True
+            if np.abs(delta) > 0.02:
+                if delta >= 0:
+                    self.kart.turn_right()
+                    commanded_keys[-1] = True 
+                elif delta < 0:
+                    self.kart.turn_left()
+                    commanded_keys[-2] = True
 
             braking = self.kart.check_radar_speed(delta)
             
@@ -151,7 +160,8 @@ class AI_PARSE():
                 print('Successfully finished the map')
                 break
             step +=1
-            np.save('ai_commands.npy', np.array(self.command))
+        np.save('ai_commands.npy', np.array(self.command))
+        AI_PARSE.need_to_map = False
 
     def move(self,step):
         # self.step+=1

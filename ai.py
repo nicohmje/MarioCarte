@@ -8,9 +8,9 @@ BLOCK_SIZE = 50
 
 class AI():
     
-    def __init__(self, string):
+    def __init__(self, string, pos_ini, angle_ini):
         self.kart = None
-        self.ai = AI_PARSE(string)
+        self.ai = AI_PARSE(string,pos_ini, angle_ini)
         if (AI_PARSE.need_to_map):
             self.ai.parse()
         self.step = 0
@@ -20,7 +20,7 @@ class AI():
 
     def move(self, string):
         self.step += 1
-        # time.sleep(0.02)
+        time.sleep(0.02)
         return self.ai.move(self.step)
 
 

@@ -402,7 +402,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             dx = self.position[0] - px
             dy = self.position[1] - py
             dist = np.sqrt(dx**2 + dy**2)
-            if (dist<dist_min) and (p!=(425,75)) :
+            if (dist<dist_min) and (p!=self.path[-1]) :
                 self.path.remove(p)
                 # print('removed :',p)
 
