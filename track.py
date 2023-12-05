@@ -3,11 +3,14 @@ from checkpoint import Checkpoint
 from boost import Boost
 from lava import Lava
 from road import Road
+import logging
 
 import time 
 import numpy as np
 
 import pygame
+
+logger = logging.getLogger('MariooCarteLogger')
 
 BLOCK_SIZE = 50
 BACKGROUND_COLOR = (0, 0, 0)
@@ -210,12 +213,12 @@ class Track(object):
             ##CUSTOM
             framerate.append(1/((time.time_ns() - start_loop)*1e-9))
             if (not compteur%100):
-                print(np.mean(framerate))
+                logger.info("%d FPS ",np.mean(framerate))
                 framerate = []
 
 
-        print("Fini en", compteur, "etapes !")
-        print("Framerate :", np.mean(framerate)) ##CUSTOM
+        logger.info("Fini en %i etapes", compteur)
+        logger.info("Framerate : %d", np.mean(framerate)) ##CUSTOM
 
         # On ferme la fenetre a la fin du circuit
         pygame.quit()

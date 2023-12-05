@@ -4,7 +4,8 @@ from grass import Grass
 
 class Boost():  # Vous pouvez ajouter des classes parentes
     surface_type = 0.02
-    color = (255, 255, 0)
+    color = (149, 40, 143)
+    sound = None
 
 
     def __init__(self, x, y):
@@ -12,7 +13,8 @@ class Boost():  # Vous pouvez ajouter des classes parentes
         pass
     
     def draw(self, screen):
-        if (Grass.texture_image is None):
+        if (Grass.track_texture is None):
+            Boost.sound = pygame.mixer.Sound("sounds/boost.wav")
             pygame.draw.rect(screen, self.color, self.rect)    
         pass
     # A completer

@@ -24,6 +24,7 @@ for i in np.arange(np.shape(image64)[0]):
             track_str += "G"
         else:
             track_str += "R"
+    
     track_str += "\n"
 
 print(track_str)
