@@ -80,12 +80,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         pass
        
-    def reset(self, initial_position, initial_orientation):
+    def reset(self, initial_position, initial_orientation, step=0):
         self.position = np.copy(initial_position)
         self.orientation = np.copy(initial_orientation)        
         self.velocity = np.array([0.,0.])
         if self.initialized:
-            self.controller.reset(self.checkpoint_step)
+            self.controller.reset(step)
 
         pass
         
@@ -93,8 +93,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.acceleration_c += MAX_ACCELERATION
         self.__input = 1
 
-        if (self.controller.is_ai):
-            logger.debug("Kart number %i: FORWARDS", self.id)
+        logger.debug("Kart number %i: FORWARDS", self.id)
 
         pass
     
@@ -102,8 +101,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.acceleration_c += -MAX_ACCELERATION
         self.__input = 4
 
-        if (self.controller.is_ai):
-            logger.debug("Kart number %i: BACKWARDS", self.id)
+         
+        logger.debug("Kart number %i: BACKWARDS", self.id)
 
         pass
     
@@ -111,22 +110,22 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.orientation = self.orientation - MAX_ANGLE_VELOCITY
         self.__input = 2
 
-        if (self.controller.is_ai):
-            logger.debug("Kart number %i: LEFT", self.id)
+         
+        logger.debug("Kart number %i: LEFT", self.id)
 
         pass
         
     def turn_right(self):
         self.orientation = self.orientation + MAX_ANGLE_VELOCITY
         self.__input = 3
-        if (self.controller.is_ai):
-            logger.debug("Kart number %i: RIGHT", self.id)
+         
+        logger.debug("Kart number %i: RIGHT", self.id)
 
         pass
     
     def update_position(self, string, screen):
-        if (self.controller.is_ai):
-            logger.debug("Kart number %i: POSITION TYPE: %s", self.id, self.position.dtype)
+         
+        logger.debug("Kart number %i: POSITION TYPE: %s", self.id, self.position.dtype)
 
         if(not self.position.dtype == "float64"): 
             self.position = self.position.astype(float)
@@ -195,7 +194,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 case 76: #ASCII FOR L
                     pygame.mixer.Sound.play(Lava.sound)
                     f = Checkpoint.surface_type
-                    self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient, )
+                    self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient, self.checkpoint_step)
 
                 case 67|68|69|70:
                     f = Checkpoint.surface_type
@@ -213,7 +212,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
                         logger.info("Finished in", time_took*1e-9, "s")
                         self.start_time = time.time_ns()
-                        self.reset([150.,150.], 0.)
+                        self.reset([150.,150.], 0., 0)
                         self.checkpoint = 0
                         logger.info(self.checkpoint)
                         pass
@@ -272,12 +271,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             if (self.position[0] + self.velocity[0]>0. and self.position[0] + self.velocity[0] < self.screen_size[0]-20.):
                 self.position[0] += self.velocity[0]
             else:
-                self.reset(self.checkpoint_pos, self.checkpoint_orient)
+                self.reset(self.checkpoint_pos, self.checkpoint_orient, self.checkpoint_step)
                 return
             if (self.position[1] + self.velocity[1]>1 and self.position[1] + self.velocity[1] < self.screen_size[1]-20):
                 self.position[1] = self.position[1] + self.velocity[1]
             else:
-                self.reset(self.checkpoint_pos, self.checkpoint_orient)
+                self.reset(self.checkpoint_pos, self.checkpoint_orient, self.checkpoint_step)
                 return
             
             
@@ -351,6 +350,21 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.orientation))
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
+        future_x = int(20*self.velocity[0]) 
+        future_y = int(20*self.velocity[1])
+
+        pos_rotated_velocity_vector_x = int(future_x  * np.cos(0.40) - future_y * np.sin(0.40))
+        pos_rotated_velocity_vector_y = int(future_x * np.sin(0.40) + future_y * np.cos(0.40))
+
+        neg_rotated_velocity_vector_x = int(future_x * np.cos(-0.40) - future_y * np.sin(-0.40))
+        neg_rotated_velocity_vector_y = int(future_x * np.sin(-0.40) + future_y * np.cos(-0.40))
+
+        pygame.draw.circle(screen, (255, 255, 255), [future_x+self.position[0],future_y+self.position[1]], 2.0)
+        pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.position[0],pos_rotated_velocity_vector_y+self.position[1]], 2.0)
+        pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.position[0],neg_rotated_velocity_vector_y+self.position[1]], 2.0)
+
+
+
         self.__input = 0 
 
     def check_radar_speed(self,delta):
@@ -360,7 +374,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         if delta < 0.2 and (np.linalg.norm(self.velocity) < 15.):
             return braking
         elif np.linalg.norm(self.velocity) >= 15.:
-            braking = True
+            # braking = True
             return braking
         elif np.absolute(delta) > 0.6:
             braking = True

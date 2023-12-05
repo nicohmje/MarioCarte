@@ -68,7 +68,7 @@ def astar(array, start, goal, block_costs):
 def mapping(track_string):
     ###Global Map*£¨%MP
     # Create a dictionary to map characters to values
-    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':0}
+    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
 
     # Split the track string into lines and create a list of lists
     track_lines = track_string.split('\n')
@@ -154,7 +154,7 @@ def mapping(track_string):
         logger.info("Path found:")
         logger.info("Success !")
     else:
-        logger.info("No path found.")
+        logger.error("No path found.")
 
     ###Adding A* info to the map
 
@@ -179,8 +179,8 @@ def mapping(track_string):
     finish_positions = finish_positions*50 + (25,25)
 
 
-    logger.info("Positions of the finish line: ")
-    logger.info(finish_positions) 
+    logger.debug("Positions of the finish line:")
+    logger.debug(finish_positions)
 
     finish = (0,0)
     norm = 1e9
@@ -190,15 +190,21 @@ def mapping(track_string):
             finish = (i[0],i[1])
             norm = temp_norm
 
+    logger.debug("FINISH")
+    logger.debug(finish)
+
     p.append(finish)
 
     size = 20
     nbr = 0
     for point in p:
-        for i in range(size):
-            for j in range(size):
-                track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
-                nbr+=1
+        x, y = point
+        track_passed[x - int(size/2):x + int(size/2) + 1, y - int(size/2):y + int(size/2) + 1] = 1000 + nbr
+        nbr += size ** 2
+        # for i in range(size):
+        #     for j in range(size):
+        #         track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
+        #         nbr+=1
 
     
 
