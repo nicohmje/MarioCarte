@@ -9,6 +9,7 @@ from checkpoint import Checkpoint
 import track
 import game
 import time
+import logging
 
 
 
@@ -22,7 +23,9 @@ BOOST_SPEED = 25.
 
 TEXT = True
 
-DEBUG = False
+logger = logging.getLogger('MariooCarteLogger')
+
+
 
 class Kart():  # Vous pouvez ajouter des classes parentes
     """
@@ -47,6 +50,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         Kart.nbr_of_karts += 1
 
+        self.id = Kart.nbr_of_karts
+
         self.position = np.array([0.,0.], dtype=float)       
         self.orientation = 0
 
@@ -58,6 +63,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.checkpoint = 0 
         self.checkpoint_pos = np.array([150,150])
         self.checkpoint_orient = 0.
+        self.checkpoint_step = 0
         
 
         self.start_time = time.time_ns()
@@ -79,7 +85,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.orientation = np.copy(initial_orientation)        
         self.velocity = np.array([0.,0.])
         if self.initialized:
-            self.controller.reset()
+            self.controller.reset(self.checkpoint_step)
 
         pass
         
@@ -87,7 +93,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.acceleration_c += MAX_ACCELERATION
         self.__input = 1
 
-        if DEBUG: print("FORWARDS")
+        if (self.controller.is_ai):
+            logger.debug("Kart number %i: FORWARDS", self.id)
 
         pass
     
@@ -95,7 +102,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.acceleration_c += -MAX_ACCELERATION
         self.__input = 4
 
-        if DEBUG: print("BACKWARDS")
+        if (self.controller.is_ai):
+            logger.debug("Kart number %i: BACKWARDS", self.id)
 
         pass
     
@@ -103,20 +111,22 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.orientation = self.orientation - MAX_ANGLE_VELOCITY
         self.__input = 2
 
-        if DEBUG: print("LEFT")
+        if (self.controller.is_ai):
+            logger.debug("Kart number %i: LEFT", self.id)
 
         pass
         
     def turn_right(self):
         self.orientation = self.orientation + MAX_ANGLE_VELOCITY
         self.__input = 3
-
-        if DEBUG: print("RIGHT")
+        if (self.controller.is_ai):
+            logger.debug("Kart number %i: RIGHT", self.id)
 
         pass
     
     def update_position(self, string, screen):
-        if DEBUG: print(self.position.dtype)
+        if (self.controller.is_ai):
+            logger.debug("Kart number %i: POSITION TYPE: %s", self.id, self.position.dtype)
 
         if(not self.position.dtype == "float64"): 
             self.position = self.position.astype(float)
@@ -170,59 +180,57 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 f = Grass.surface_type
 
             if not string_letter == ord('G') and self.music_playing :
-                print("stop")
+                #logger.debug("Kart number %i: stop grass sound")
                 pygame.mixer.music.fadeout(300)
                 self.music_playing = False
-            
-            if string_letter == ord('B'):
-                pygame.mixer.Sound.play(Boost.sound)
-                f = Boost.surface_type
-                boosting = True
+            match string_letter:
+                case 66: #ASCII FOR B
+                    pygame.mixer.Sound.play(Boost.sound)
+                    f = Boost.surface_type
+                    boosting = True
 
-            elif string_letter == ord('R'):
-                f = Road.surface_type
+                case 82: #ASCII FOR R
+                    f = Road.surface_type
 
-            elif string_letter == ord('L'):
-                pygame.mixer.Sound.play(Lava.sound)
-                f = Checkpoint.surface_type
-                self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient)
+                case 76: #ASCII FOR L
+                    pygame.mixer.Sound.play(Lava.sound)
+                    f = Checkpoint.surface_type
+                    self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient, )
 
-            elif (string_letter >= ord('C') and string_letter <= ord('F')):
-                f = Checkpoint.surface_type
+                case 67|68|69|70:
+                    f = Checkpoint.surface_type
+                    cur_checkpoint = (string_letter - ord('C')) + 1
+                    if cur_checkpoint > self.checkpoint + 1:
+                        pass
+                    elif cur_checkpoint == self.checkpoint_nbr:
+                        self.__end_time = time.time_ns()
 
-                cur_checkpoint = (string_letter - ord('C')) + 1
-                
-                if cur_checkpoint > self.checkpoint + 1:
-                    pass
-                elif cur_checkpoint == self.checkpoint_nbr:
-                    self.__end_time = time.time_ns()
+                        self.has_finished = False
 
-                    self.has_finished = False
+                        time_took = self.__end_time - self.start_time
+                        if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
+                            self.best_time = time_took*1e-9
 
-                    time_took = self.__end_time - self.start_time
-                    if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
-                        self.best_time = time_took*1e-9
-
-                    print("Finished in", time_took*1e-9, "s")
-                    self.start_time = time.time_ns()
-                    self.reset([150.,150.], 0.)
-                    self.checkpoint = 0
-                    print(self.checkpoint)
-                    pass
-                elif cur_checkpoint>self.checkpoint:
-
-                    print("Checkpoint reached:", cur_checkpoint)
-                    pygame.mixer.Sound.play(Checkpoint.sound)
-                    self.checkpoint = cur_checkpoint
-                    self.checkpoint_pos[0] = np.copy(self.position[0])
-                    self.checkpoint_pos[1] = np.copy(self.position[1])
-                    self.checkpoint_orient = np.copy(self.orientation)
+                        logger.info("Finished in", time_took*1e-9, "s")
+                        self.start_time = time.time_ns()
+                        self.reset([150.,150.], 0.)
+                        self.checkpoint = 0
+                        logger.info(self.checkpoint)
+                        pass
+                    elif cur_checkpoint>self.checkpoint:
+                        logger.info("Checkpoint reached: %i" , cur_checkpoint)
+                        pygame.mixer.Sound.play(Checkpoint.sound)
+                        self.checkpoint = cur_checkpoint
+                        self.checkpoint_step = self.controller.step
+                        self.checkpoint_pos[0] = np.copy(self.position[0])
+                        self.checkpoint_pos[1] = np.copy(self.position[1])
+                        self.checkpoint_orient = np.copy(self.orientation)
 
 
             self.acceleration = round((self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))),6)
             vel = self.acceleration + np.linalg.norm(self.velocity) 
             
-            if DEBUG: print("vel:", vel, "orientation", self.orientation, "theta_v", theta_v)
+            logger.debug("Kart number %i: vel: %s ; orientation: %s ; theta_v: %s", self.id, vel, self.orientation, theta_v)
 
             if (not boosting):
                 self.velocity = np.array([round((vel * np.cos(self.orientation)),4), round((vel*np.sin(self.orientation)),4)])
@@ -256,7 +264,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 text_rect.center = (self.screen_size[0]//2, self.screen_size[1]//2+100)  # Adjust the position as needed
                 screen.blit(text, text_rect)
 
-            if DEBUG: print("accel", self.acceleration, "velocity", np.linalg.norm(self.velocity), self.velocity, "\n")
+            logger.debug("Kart number %i: accel: %s ; velocity(norm): %s ; velocity : %s ", self.id, self.acceleration, np.linalg.norm(self.velocity), self.velocity)
 
             self.position = self.position.astype(float)
 

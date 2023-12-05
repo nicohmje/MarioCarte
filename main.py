@@ -2,12 +2,18 @@ from track import Track
 from ai import AI
 from human import Human
 from kart import Kart
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG, format='%(filename)s -  %(levelname)s - %(message)s')
+logger = logging.getLogger('MariooCarteLogger')
+
 
 # La chaine de caractere decrivant le terrain
 string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
 GRRRRRRCRRRRRRRRRBRRRRRRRG
-GRRRRRRCRRRRRRRRRBRRRRRRRG
-GRRRRRRCRRRRRRRRRRRRRRRRRG
+GRRRRRRCRRRRRBRRRBRRRRRRRG
+GRRRRRRCRRRRRBRRRRRRRRRRRG
 GRRRRRRCRRRRRRRRRRRRRRRRRG
 GGGGGGGGGGGGGGGGGGGGGRRRRG
 GGGGGGGGGGGGGGGGGGGGGRRRRG
@@ -15,10 +21,10 @@ GRRRRGGGGGGGGGGGGGGGGRRRRG
 GFFRRGGGGGGGGGGGGGGGGRRRRG
 GLRRRGGGGGGGGGGGGGGGGRRRRG
 GRRRRGGGGGGGGGGGGGGGGDDDDG
-GRRRRRERRRRRGGBRRRRRRRRLLG
-GRRRRRERRRRRGGBRRRRRRRRRRG
-GLRRRRERRRRRRRBRRRRRRRRRRG
-GLLRRRERRRRRRRBRRRRRRRRRRG
+GRRRRRERRRRRRRBRRRRRRRRLLG
+GRRRRRERRRRRRRBRRRRRRRRRRG
+GLRRRRERRRRRGGBRRRRRRRRRRG
+GLLRRRERRRRRGGBRRRRRRRRRRG
 GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 
 # string = """GGGGGGGGGGGGGGGGGGGGGGGG
@@ -120,12 +126,12 @@ Vous ne devez pas modifier ces quatre lignes de code
 # kart = Kart(controller)
 
 #AJDNWIUDAWND
-# kart = Kart(AI(string,initial_position, initial_angle))
-kart_2 = Kart(Human())
+kart = Kart(AI(string,initial_position, initial_angle))
+# kart_2 = Kart(Human())
 
 
 
 track = Track(string, initial_position, initial_angle)
-track.add_kart(kart_2)
+track.add_kart(kart)
 # track.add_kart(kart_2)
 track.play()

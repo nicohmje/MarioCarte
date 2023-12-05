@@ -1,10 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from typing import NamedTuple
-import random
-import time
-import math
+import logging
 
+
+logger = logging.getLogger('MariooCarteLogger')
 
 ###Defining usefull fonctions :
 def fenetre(position,track):
@@ -153,10 +151,10 @@ def mapping(track_string):
     path = astar(useable_track, start, goal, block_costs)
 
     if path:
-        print("Path found:")
-        print("Success !")
+        logger.info("Path found:")
+        logger.info("Success !")
     else:
-        print("No path found.")
+        logger.info("No path found.")
 
     ###Adding A* info to the map
 
@@ -181,8 +179,8 @@ def mapping(track_string):
     finish_positions = finish_positions*50 + (25,25)
 
 
-    print("[INFO] Positions of the finish line: ")
-    print(finish_positions) 
+    logger.info("Positions of the finish line: ")
+    logger.info(finish_positions) 
 
     finish = (0,0)
     norm = 1e9

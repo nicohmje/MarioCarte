@@ -2,9 +2,13 @@ import pygame
 import time
 import numpy as np 
 from grass import Grass
+import logging
+
+
+logger = logging.getLogger('MariooCarteLogger')
 
 def splash_screen(screen, texture, started):
-    print("started")
+    logger.info("Started")
     dimensions = screen.get_size()
     screen = pygame.display.set_mode((1300,647))
     while (not started):
@@ -21,7 +25,7 @@ def splash_screen(screen, texture, started):
 
 
 def countdown(screen, texture, started):
-    print("started")
+    logger.info("Started")
     dimensions = screen.get_size()
     screen = pygame.display.set_mode((1300,647))
     while (not started):
