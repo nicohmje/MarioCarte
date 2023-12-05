@@ -8,41 +8,6 @@ from Mapping import mapping
 from kart import Kart
 import pygame
 
-# track_string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
-# GRRRRRRCRRRRRRRRRBRRRRRRRG
-# GRRRRRRCRRRRRRRRRBRRRRRRRG
-# GRRRRRRCRRRRRRRRRRRRRRRRRG
-# GRRRRRRCRRRRRRRRRRRRRRRRRG
-# GGGGGGGGGGGGGGGGGGGGGRRRRG
-# GGGGGGGGGGGGGGGGGGGGGRRRRG
-# GRRRRGGGGGGGGGGGGGGGGRRRRG
-# GFFRRGGGGGGGGGGGGGGGGRRRRG
-# GLRRRGGGGGGGGGGGGGGGGRRRRG
-# GRRRRGGGGGGGGGGGGGGGGDDDDG
-# GRRRRRERRRRRRRBRRRRRRRRLLG
-# GRRRRRERRRRRRRBRRRRRRRRRRG
-# GLRRRRERRRRRGGBRRRRRRRRRRG
-# GLLRRRERRRRRGGBRRRRRRRRRRG
-# GGGGGGGGGGGGGGGGGGGGGGGGGG"""
-
-# track_string = """GGGGGG
-# GRRRRG
-# GRRRRG
-# GRRRRG
-# GRRRRG
-# GCCCCG
-# GRRRRG
-# GRRRRG
-# GRRRBG
-# GRRRRG
-# GDDDDG
-# GRRRRG
-# GEEEEG
-# GRRRRG
-# GRRRRG
-# GFFFFG
-# GGGGGG"""
-
 class AI_PARSE():  
 
     
@@ -51,6 +16,7 @@ class AI_PARSE():
         self.track_string = track_string
         self.pos_ini = initial_position
         self.angle_ini = -1*initial_angle + np.pi/2.
+        self.f = 0.02
 
         AI_PARSE.need_to_map = False
         try:
@@ -102,10 +68,6 @@ class AI_PARSE():
         
 
     def parse(self):
-
-        # if len(self.command) > 2:
-            
-        #     return
 
         print("[INFO] STARTED FINDING PATH FOR AI")
         success = False

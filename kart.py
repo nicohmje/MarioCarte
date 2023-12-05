@@ -386,12 +386,20 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         boosting = False
         X = np.array(self.position, dtype='int')
 
+        if self.map[X[0]][X[1]] == 0:
+            f = 0.2
+            boosting = False
+            return 'ap',boosting, f
+
+
         if self.map[X[0]][X[1]] == 200:
             boosting = True
-            return 'ap',boosting
+            f = 0.02
+            return 'ap',boosting, f
         
         else:
-            return 'a',boosting
+            f = 0.02
+            return 'a',boosting, f
         
     def radar_points(self):
         
@@ -410,9 +418,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.map = useable_array
 
     def update_pos_AI(self):
-        _, boosting = self.read_map()
+        _, boosting,f = self.read_map()
         theta_v = math.atan2(self.velocity[1], self.velocity[0])
-        self.acceleration = self.acceleration_c - (0.02 * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
+        self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
         vel = self.acceleration + np.linalg.norm(self.velocity) 
         
         if (not boosting):

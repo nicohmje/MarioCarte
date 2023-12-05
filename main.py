@@ -120,12 +120,12 @@ Vous ne devez pas modifier ces quatre lignes de code
 # kart = Kart(controller)
 
 #AJDNWIUDAWND
-kart = Kart(AI(string,initial_position, initial_angle))
-# kart_2 = Kart(Human())
+# kart = Kart(AI(string,initial_position, initial_angle))
+kart_2 = Kart(Human())
 
 
 
 track = Track(string, initial_position, initial_angle)
-track.add_kart(kart)
+track.add_kart(kart_2)
 # track.add_kart(kart_2)
 track.play()

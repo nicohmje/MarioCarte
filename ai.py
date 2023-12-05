@@ -13,6 +13,8 @@ class AI():
         self.ai = AI_PARSE(string,pos_ini, angle_ini)
         if (AI_PARSE.need_to_map):
             self.ai.parse()
+        else:
+            print("no need to map")
         self.step = 0
 
     def reset(self):
