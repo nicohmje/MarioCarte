@@ -142,7 +142,10 @@ def mapping(track_string):
 
     # Start and goal positions
     start = (150, 150)
-    goal = (425, 75)
+
+    finish_positions = np.argwhere(track_array == 104)
+    goal = (np.mean(finish_positions[:,0])*50 + 50/2., np.mean(finish_positions[:,1])*50 + 50/2.)
+    logger.debug(goal)
 
     # Define block costs
     block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}

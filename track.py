@@ -212,8 +212,10 @@ class Track(object):
 
             ##CUSTOM
             framerate.append(1/((time.time_ns() - start_loop)*1e-9))
+            if len(framerate) == 0:
+                framerate.append(1)
             if (not compteur%100):
-                logger.info("%d FPS ",np.mean(framerate))
+                logger.info("%d FPS ", np.mean(framerate))
                 framerate = []
 
 

@@ -350,14 +350,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.orientation))
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
-        future_x = int(20*self.velocity[0]) 
-        future_y = int(20*self.velocity[1])
+        Vel_dir = self.velocity / (max(np.abs(self.velocity)) +1e-3)
 
-        pos_rotated_velocity_vector_x = int(future_x  * np.cos(0.40) - future_y * np.sin(0.40))
-        pos_rotated_velocity_vector_y = int(future_x * np.sin(0.40) + future_y * np.cos(0.40))
+        Ratio = max(min(np.linalg.norm(self.velocity)*13, 200), 55)
 
-        neg_rotated_velocity_vector_x = int(future_x * np.cos(-0.40) - future_y * np.sin(-0.40))
-        neg_rotated_velocity_vector_y = int(future_x * np.sin(-0.40) + future_y * np.cos(-0.40))
+        future_x = int(Ratio*Vel_dir[0])
+        future_y = int(Ratio*Vel_dir[1])
+
+        pos_rotated_velocity_vector_x = int(future_x  * np.cos(0.65) - future_y * np.sin(0.65))
+        pos_rotated_velocity_vector_y = int(future_x * np.sin(0.65) + future_y * np.cos(0.65))
+
+        neg_rotated_velocity_vector_x = int(future_x * np.cos(-0.65) - future_y * np.sin(-0.65))
+        neg_rotated_velocity_vector_y = int(future_x * np.sin(-0.65) + future_y * np.cos(-0.65))
 
         pygame.draw.circle(screen, (255, 255, 255), [future_x+self.position[0],future_y+self.position[1]], 2.0)
         pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.position[0],pos_rotated_velocity_vector_y+self.position[1]], 2.0)
@@ -373,8 +377,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         range_points = 10*int(np.linalg.norm(self.velocity))
         if delta < 0.2 and (np.linalg.norm(self.velocity) < 15.):
             return braking
-        elif np.linalg.norm(self.velocity) >= 15.:
-            # braking = True
+        elif np.linalg.norm(self.velocity) >= 20.:
+            braking = True
             return braking
         elif np.absolute(delta) > 0.6:
             braking = True

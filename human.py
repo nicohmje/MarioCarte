@@ -12,5 +12,5 @@ class Human():
         time.sleep(0.01)
         return pygame.key.get_pressed()
     
-    def reset(self):
+    def reset(self, step):
         pass
