@@ -352,7 +352,7 @@ class AI_PARSE():
 
     def move(self,step):
         if step >= len(self.command) or step < 0:
-            cmd =  [True, False, False, False]
+            cmd =  [False, False, False, False]
         else:
             cmd = self.command[step]
 

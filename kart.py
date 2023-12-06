@@ -86,7 +86,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.velocity = np.array([0.,0.])
         if self.initialized:
             self.controller.reset(step)
-            time.sleep(4)
+            # time.sleep(4)
 
         pass
         
