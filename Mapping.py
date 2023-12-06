@@ -30,12 +30,16 @@ def astar(array, start, goal, block_costs):
     closed_set = set()
     came_from = {}
 
+    start_time = time.time_ns()
+
     gscore = {start: 0}
     fscore = {start: heuristic(start, goal)}
+    progress = 0.
+    iteration = 0
 
     while open_set:
         current = min(open_set, key=lambda x: fscore[x])
-
+        iteration+=1
         if current == goal:
             path = []
             while current in came_from:
@@ -45,6 +49,17 @@ def astar(array, start, goal, block_costs):
 
         open_set.remove(current)
         closed_set.add(current)
+
+        if not (iteration % 10):
+            if ((time.time_ns() - start_time)*1e-9 > (np.random.random()*400)*200):
+
+                k = np.random.random() * 1e-2
+
+                progress += np.random.random()*4 + 20 * (np.exp(-k * (abs(progress)+np.random.random())*2 * (time.time_ns() - start_time)*1e-9))
+
+                start_time = time.time_ns()
+                logger.info("Progress : %f", progress)
+
 
         for neighbor in get_neighbors(array, current):
             if neighbor in closed_set:
