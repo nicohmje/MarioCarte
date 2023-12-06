@@ -212,11 +212,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
                             self.best_time = time_took*1e-9
 
-                        logger.info("Finished in", time_took*1e-9, "s")
+                        logger.info("Finished in %fs", time_took*1e-9)
                         self.start_time = time.time_ns()
                         self.reset([150.,150.], 0., -1)
                         self.checkpoint = 0
-                        logger.info(self.checkpoint)
                         pass
                     elif cur_checkpoint>self.checkpoint:
                         logger.info("Checkpoint reached: %i" , cur_checkpoint)
@@ -397,18 +396,15 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.velocity))
-        if delta < 0.2 and (np.linalg.norm(self.velocity) < 15.):
+        if abs(delta) < 0.2 and (np.linalg.norm(self.velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.velocity) >= 17.:
+        elif np.linalg.norm(self.velocity) >= 15.:
             braking = True
             return braking
-        elif np.absolute(delta) > 0.6:
+        elif abs(delta) > 1.2:
             braking = True
             return braking
-        
-
         else:
-
             for i in range(1, range_points + 2):
                 # Calculate the position of the point in front of the kart
                 x_check = int(self.position[0] + i * np.cos(self.orientation))
@@ -452,16 +448,30 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 return 'a',boosting, f
         
     def radar_points(self):
-        dist_min = 70
+        dist_min_y = 150
+        dist_min_x = 60
+
+        #x is forward
+        #y is right 
+
         for p in self.path:
             px = float(p[0])
             py = float(p[1])
-            dx = self.position[0] - px
-            dy = self.position[1] - py
-            dist = np.sqrt(dx**2 + dy**2)
-            if (dist<dist_min) and (p!=self.path[-1]) :
+
+            obj_vec = np.array([px - self.position[0], py - self.position[1]]) #Kart to object
+            #angle_to_lava = np.arccos(np.dot(self.velocity, obj_vec)/ (np.linalg.norm(self.velocity) * np.linalg.norm(obj_vec)))
+            
+
+            #We now compute the Kart to object vector in the Kart frame
+            obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.orientation) - obj_vec[1]*np.sin(-1*self.orientation), obj_vec[0]*np.sin(-1*self.orientation) + obj_vec[1] * np.cos(-1*self.orientation)])
+            
+            #Ellipse equation 
+            #obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1
+            
+            #If the point is inside that ellipse, we'll delete it, as long as it isn't the last point. 
+            if (obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1) and (p!=self.path[-1]):
                 self.path.remove(p)
-                # print('removed :',p)
+                #print('removed :',p)
 
     def create_map(self,useable_array):
         self.map = useable_array

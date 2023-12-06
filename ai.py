@@ -23,7 +23,7 @@ class AI():
         self.step = step
 
     def move(self, string):
-        time.sleep(0.02)
+        time.sleep(0.01)
         logger.debug("Step %i", self.step)
         keys = self.ai.move(self.step)
         self.step+=1

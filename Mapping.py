@@ -6,18 +6,12 @@ import time
 
 logger = logging.getLogger('MariooCarteLogger')
 
-###Defining usefull fonctions :
-def fenetre(position,track):
-    x = position[0]
-    y = position[1]
-    fenetre = np.zeros([3,3])
-    fenetre = track[x:x+3, y:y+3]
-
-    # for i in range(3):
-    #     for j in range(3):
-    #         fenetre[i][j]=int(track[x+i][y+j])
-    return fenetre
-
+# ###Defining usefull fonctions :
+# def fenetre(position,track):
+#     x = position[0]
+#     y = position[1]
+#     fenetre = track[x:x+3, y:y+3]
+#     return fenetre
 
 def heuristic(a, b):
     return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
@@ -69,7 +63,7 @@ def astar(array, start, goal, block_costs):
                     
     return None
 
-def mapping(track_string):
+def mapping(track_string,ini_pos):
     ###Global Map*£¨%MP
     # Create a dictionary to map characters to values
     char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
@@ -145,23 +139,43 @@ def mapping(track_string):
 
 
     # Start and goal positions
-    start = (150, 150)
+    start = (int(ini_pos[0]),int(ini_pos[1]))
 
-    finish_positions = np.argwhere(track_array == 104)
-    goal = (np.mean(finish_positions[:,0])*50 + 50/2., np.mean(finish_positions[:,1])*50 + 50/2.)
-    logger.debug(goal)
 
+    cp1_pos = np.argwhere(track_array == 101)
+    cp2_pos = np.argwhere(track_array == 102)
+    cp3_pos = np.argwhere(track_array == 103)
+    cp4_pos = np.argwhere(track_array == 104)
+
+    cp=np.array([[0.,0.],[0.,0.],[0.,0.],[0.,0.],[0.,0.]])
+
+    cp[0] = start
+    cp[1] = (np.mean(cp1_pos[:,0])*50 + 50/2., np.mean(cp1_pos[:,1])*50 + 50/2.)
+    cp[2] = (np.mean(cp2_pos[:,0])*50 + 50/2., np.mean(cp2_pos[:,1])*50 + 50/2.)
+    cp[3] = (np.mean(cp3_pos[:,0])*50 + 50/2., np.mean(cp3_pos[:,1])*50 + 50/2.)
+    cp[4] = (np.mean(cp4_pos[:,0])*50 + 50/2., np.mean(cp4_pos[:,1])*50 + 50/2.)
+
+    nbr_cp = (int(not np.any(np.isnan(cp[1]))) + int(not np.any(np.isnan(cp[2])))+ int(not np.any(np.isnan(cp[3])))+ int(not np.any(np.isnan(cp[4]))))
+
+    logger.debug("NBR CP %i", nbr_cp)
+    
     # Define block costs
-    block_costs = {0: 2000, 15: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
+    block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:100}
+
+    path = []
 
     # Find the path using A*
-    path = astar(useable_track, start, goal, block_costs)
+    for i in range(nbr_cp):
+        logger.info("Going to CP%i", i+1)
+        start = (int(cp[i][0]), int(cp[i][1]))
+        goal = (int(cp[i+1][0]), int(cp[i+1][1]))
+        path += (astar(useable_track, start, goal, block_costs))
+        logger.debug(goal)
 
     if path:
-        logger.info("Path found:")
-        logger.info("Success !")
+        logger.info("PATH FOUND")
     else:
-        logger.error("No path found.")
+        logger.error("NO PATH FOUND")
 
     ###Adding A* info to the map
 
@@ -180,16 +194,17 @@ def mapping(track_string):
     p = []
     x_ini = path[0]
     p.append(x_ini)
-    old_arr = np.array([0.,0.])
+    cp = 101
     for x in path:
         arr = np.array([x[0]-x_ini[0], x[1]-x_ini[1]])
         if (np.linalg.norm(arr)>100.):
             p.append(x)
-            x_ini = x
-        # elif np.arccos(np.dot(arr,old_arr) /( (np.linalg.norm(arr) * np.linalg.norm(old_arr)))) > 0.7:
-        #     p.append(x)
-        #     x_ini = x
-        old_arr = arr
+            x_ini = x        
+        elif (track_passed[x[0]][x[1]] == cp):
+            p.append(x)
+            x_ini = x 
+            cp += 1
+
 
     finish_positions = np.argwhere(track_array == 104)
 

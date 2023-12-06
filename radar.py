@@ -56,7 +56,6 @@ class AI_PARSE():
         if (AI_PARSE.need_to_map):
             logger.info("STARTED MAPPING")
             if (track_string_file == track_string):
-                logger.info("TRYING TO LOAD TRACK AND PATH")
                 if os.path.isfile("track.npy") and os.path.isfile("path.txt"):
                     AI_PARSE.track = np.load("track.npy")
                     logger.info("Loaded previous track")
@@ -69,18 +68,20 @@ class AI_PARSE():
                     logger.info("Loaded previous path")
                     logger.info("Loaded previous mapping")
                 else:
-                    AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+                    logger.info("STARTED TRACK PARSING (this may take a while, don't panic if it looks stuck)")
+                    AI_PARSE.track, AI_PARSE.path = mapping(track_string, self.pos_ini)
                     np.save("track.npy", AI_PARSE.track)
                     with open(r'path.txt', 'w') as fp:
                         fp.write("\n".join(str(item) for item in AI_PARSE.path))
                     fp.close()
             else:
-                logger.debug("TRACK STRING HAS CHANGED")
+                logger.info("TRACK STRING HAS CHANGED")
+                logger.info("STARTED TRACK PARSING (this may take a while, don't panic if it looks stuck)")
                 if (os.path.exists("track.npy")):  
                     os.remove("track.npy")
                 if (os.path.exists("path.txt")):
                     os.remove("path.txt")
-                AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+                AI_PARSE.track, AI_PARSE.path = mapping(track_string, self.pos_ini)
                 np.save("track.npy", AI_PARSE.track)
                 with open(r'path.txt', 'w') as fp:
                         fp.write("\n".join(str(item) for item in AI_PARSE.path))
@@ -88,7 +89,7 @@ class AI_PARSE():
             # logger.debug("NP SHAPE PATH")
             # logger.debug(np.shape(AI_PARSE.path))
 
-            logger.info("Number of points (A*): %s", np.shape(AI_PARSE.path))
+            logger.debug("Number of points (A*): %s", np.shape(AI_PARSE.path))
             self.command = []
             self.command.append([False, False, False, False])
             self.largeur = AI_PARSE.track.shape[1]
@@ -150,6 +151,7 @@ class AI_PARSE():
             try:
                 future_point = self.kart.map[int(future[0]+cur_pos_x)][int(future[1]+cur_pos_y)]
             except:
+                future_point = -100
                 pass
 
             diydar_lava_front, dist_to_lava_diydar = self.diydar(future)
@@ -212,9 +214,14 @@ class AI_PARSE():
             braking = self.kart.check_radar_speed(delta)
 
 
+
             lava_front, distance_front = self.lava_along_vector(future)
             lava_left, distance_left = self.lava_along_vector(pos_rotated_velocity_vector)
             lava_right, distance_right = self.lava_along_vector(neg_rotated_velocity_vector)
+
+            oob_front, oob_distance_front = self.out_of_bounds(future)
+            oob_left, oob_distance_left = self.out_of_bounds(pos_rotated_velocity_vector)
+            oob_right, oob_distance_right = self.out_of_bounds(neg_rotated_velocity_vector)
 
             # logger.debug("MAP %s", self.kart.map[140:145,153:158])
             # logger.debug("TRACK %s", AI_PARSE.track[140:145,153:158])
@@ -244,6 +251,9 @@ class AI_PARSE():
             logger.debug("lava along front [DIYDAR]: %s", diydar_lava_front)
             logger.debug("lava along left: %s, Lava position (left) %s", lava_left, lava_pos_l)
             logger.debug("lava along right: %s, Lava position (right) %s", lava_right,lava_pos_r)
+            logger.debug("oob_front: %s", oob_front)
+            logger.debug("oob_left: %s", oob_left)
+            logger.debug("oob_right: %s", oob_right)
 
             sum = 0
             V_0 = velocity_norm
@@ -274,41 +284,51 @@ class AI_PARSE():
                 intersect_left = False
                 intersect_right = False
   
-        
 
+            if(oob_front):
+                braking = True
+                logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING") 
             if (lava_front):
-                braking = (True,False)[1.2*dist_to_stop<distance]
+                braking = (False,True)[1.2*dist_to_stop>distance or braking]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING") 
             if (diydar_lava_front):
-                braking = (True,False)[dist_to_stop<dist_to_lava_diydar]
+                braking = (False,True)[dist_to_stop>dist_to_lava_diydar or braking]
                 logger.debug("BRAKING DIYDAR BRAKING DIYDAR BRAKING DIYDAR BRAKING DIYDAR BRAKING DIYDAR BRAKING DIYDAR")    
-            if ((lava_right or intersect_right)):
+            if ((lava_right or intersect_right or oob_right)):
                 delta = +0.5
                 logger.debug("CHOICE2 %f", delta)
-                braking = (True,False)[1.2*dist_to_stop<distance]
+                braking = (False,True)[1.2*dist_to_stop>distance or braking]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
-            elif ((lava_left or intersect_left)):
+            elif ((lava_left or intersect_left or oob_left)):
                 delta = -0.5
                 logger.debug("CHOICE3 %f", delta)
-                braking = (True,False)[1.2*dist_to_stop<distance]
+                braking = (False,True)[1.2*dist_to_stop>distance or braking]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
             elif (len(lava_pos)>0 and intersect):
                 logger.debug('INTERSECTION WITH LAVA')
                 logger.debug("Lava pos: %s", lava_pos)
                 logger.debug("Lava distance: %s", distance)
 
-                if intersect_left and not intersect_right:
+                if intersect_left and not intersect_right and not oob_right:
                     delta = -0.5
                     logger.debug("CHOICE4 %f", delta)
-                elif intersect_right and not intersect_left:
+                elif intersect_right and not intersect_left and not oob_left:
                     delta = 0.5
                     logger.debug("CHOICE5 %f", delta)
+                elif oob_left and not oob_right:
+                    delta = -0.5
+                    logger.debug("CHOICE7 %f", delta)
+                elif oob_right and not oob_left:
+                    delta = 0.5
+                    logger.debug("CHOICE8 %f", delta)
                 else:
                     delta += (+0.3, -0.3)[pos_future_rotated_point<neg_future_rotated_point]
                     logger.debug("CHOICE6 %f", delta)
             elif (current_point  < 100): 
                 delta += (+0.3, -0.3)[pos_future_rotated_point<neg_future_rotated_point]
                 logger.debug("CHOICE7 %f", delta)
+
+            
 
 
             if np.abs(delta) > 0.03:
@@ -326,7 +346,7 @@ class AI_PARSE():
                 turning_right, turning_left = False, False
             
             #Speed control
-            if braking and velocity_norm > 0.3:
+            if braking and velocity_norm > 0.4:
                 self.kart.backward()
                 commanded_keys[1] = True
             else:
@@ -348,8 +368,7 @@ class AI_PARSE():
                 logger.info("LAVA")
                 # time.sleep(2)
 
-            # if step>94 and step<115:
-            #      time.sleep(1.4)
+            
             step +=1
         
         np.save('ai_commands.npy', np.array(self.command))
@@ -379,6 +398,20 @@ class AI_PARSE():
 
         return False, 1e9
     
+    def out_of_bounds(self, vector):
+        for i in np.linspace(0,int(np.linalg.norm(vector)),20):
+                normalized = i/(2*int(np.linalg.norm(vector))+1e-3)
+
+                along_line = np.array(self.kart.position + normalized*vector, dtype=np.int16) 
+                try: 
+                    if (self.kart.map[along_line[0]][along_line[1]] == 10):
+                        pass
+                except:
+                    return True, i/2.
+                    # return True, 1e9
+
+        return False, 1e9
+    
     def min_along_vector(self, vector):
         for i in range(int(np.linalg.norm(vector))+1):
                 smallest = 1e9
@@ -388,7 +421,7 @@ class AI_PARSE():
                     if (self.kart.map[along_line[0]][along_line[1]] < smallest):
                         smallest = self.kart.map[along_line[0]][along_line[1]]
                 except:
-                    pass
+                    smallest = -100
         return (1, smallest)[smallest < 1e8]
     
     def line_intersects_circle(self, X, vector, circle_center, circle_radius=10):

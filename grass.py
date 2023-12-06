@@ -8,7 +8,7 @@ logger = logging.getLogger('MariooCarteLogger')
 class Grass():  
 
     surface_type = 0.2
-    color = (0, 147, 132)
+    color = (255, 0, 132)
     nbr_of_grass = 0 
 
     track_texture = None
@@ -43,7 +43,7 @@ class Grass():
     
         if (self.grass_nbr == Grass.nbr_of_grass-1 and Grass.track_texture is None): 
             screen.blit(Grass.grass_texture, self.rect) 
-            pygame.draw.rect(screen, self.color, self.rect)    
+            #pygame.draw.rect(screen, self.color, self.rect)    
             logger.info("Saved track")
             # time.sleep(0.02)
             pygame.image.save(screen, "track.png")
