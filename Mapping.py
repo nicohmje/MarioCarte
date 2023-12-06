@@ -1,5 +1,7 @@
 import numpy as np
 import logging
+import matplotlib.pyplot as plt
+import time
 
 
 logger = logging.getLogger('MariooCarteLogger')
@@ -184,9 +186,9 @@ def mapping(track_string):
         if (np.linalg.norm(arr)>100.):
             p.append(x)
             x_ini = x
-        elif np.arccos(np.dot(arr,old_arr) /( (np.linalg.norm(arr) * np.linalg.norm(old_arr)))) > 0.7:
-            p.append(x)
-            x_ini = x
+        # elif np.arccos(np.dot(arr,old_arr) /( (np.linalg.norm(arr) * np.linalg.norm(old_arr)))) > 0.7:
+        #     p.append(x)
+        #     x_ini = x
         old_arr = arr
 
     finish_positions = np.argwhere(track_array == 104)

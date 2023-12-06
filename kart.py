@@ -13,7 +13,7 @@ import logging
 
 
 
-# ROAD MAP: ADD TRAIL (and boosting effect) || FIX AI AND HUMAN || FIND FINISH LINE
+# ROAD MAP: ADD TRAIL (and boosting effect) || FIX AI AND HUMAN
 
 from common import Common
 
@@ -360,9 +360,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         future_y = int(Ratio*Vel_dir[1])
 
 
-        k = 0.3
+        k = 0.5
         angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.velocity)))
-        scale = 1/1
+        vec_scale = 1/1
 
         if np.linalg.norm(self.velocity) < 2:
                 angle = 1.2 
@@ -371,16 +371,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         if self.__input == 3:
             skew = (1.,-1.) #pos is left
+            vec_scale = 0.8
         elif self.__input == 2:
             skew = (-1.,1.) 
+            vec_scale = 0.8
 
 
 
-        pos_rotated_velocity_vector_x = int(scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
-        pos_rotated_velocity_vector_y = int(scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
+        pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
+        pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
 
-        neg_rotated_velocity_vector_x = int(scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
-        neg_rotated_velocity_vector_y = int(scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
+        neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
+        neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
 
         pygame.draw.circle(screen, (255, 255, 255), [future_x+self.position[0],future_y+self.position[1]], 2.0)
         pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.position[0],pos_rotated_velocity_vector_y+self.position[1]], 2.0)
@@ -390,13 +392,14 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__input = 0 
 
+
     def check_radar_speed(self,delta):
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.velocity))
         if delta < 0.2 and (np.linalg.norm(self.velocity) < 15.):
             return braking
-        elif np.linalg.norm(self.velocity) >= 20.:
+        elif np.linalg.norm(self.velocity) >= 17.:
             braking = True
             return braking
         elif np.absolute(delta) > 0.6:
@@ -449,7 +452,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 return 'a',boosting, f
         
     def radar_points(self):
-        dist_min = 100
+        dist_min = 70
         for p in self.path:
             px = float(p[0])
             py = float(p[1])

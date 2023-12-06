@@ -157,7 +157,7 @@ class AI_PARSE():
             if dist_to_lava_diydar > 1e3:
                 dist_to_lava_diydar = 0.
 
-            k = 0.3
+            k = 0.5
 
             angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.kart.velocity)))
 
@@ -173,8 +173,10 @@ class AI_PARSE():
 
             if turning_left:
                 skew = (1.,-1.) #pos is left
+                scale = 0.8
             elif turning_right:
                 skew = (-1.,1.)
+                scale = 0.8
 
 
             pos_rotated_velocity_vector = np.array([int(scale*((future[0]  * np.cos(angle + skew[0]*0.2)) - future[1] * np.sin(angle+ skew[0]*0.2))),int(scale*(future[0] * np.sin(angle+ skew[0]*0.2) + future[1] * np.cos(angle+ skew[0]*0.2)))])
@@ -304,9 +306,12 @@ class AI_PARSE():
                 else:
                     delta += (+0.3, -0.3)[pos_future_rotated_point<neg_future_rotated_point]
                     logger.debug("CHOICE6 %f", delta)
+            elif (current_point  < 100): 
+                delta += (+0.3, -0.3)[pos_future_rotated_point<neg_future_rotated_point]
+                logger.debug("CHOICE7 %f", delta)
 
 
-            if np.abs(delta) > 0.02:
+            if np.abs(delta) > 0.03:
                 if delta >= 0:
                     turning_left = True
                     turning_right = False
@@ -343,7 +348,7 @@ class AI_PARSE():
                 logger.info("LAVA")
                 # time.sleep(2)
 
-            # if step>150 and step<180:
+            # if step>94 and step<115:
             #      time.sleep(1.4)
             step +=1
         
