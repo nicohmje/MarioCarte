@@ -36,12 +36,13 @@ class AI_PARSE():
                     AI_PARSE.need_to_map = True                    
             else: 
                 logger.info('TRACK STRING HAS CHANGED')
-                os.remove("ai_commads.npy")
+                os.remove("ai_commands.npy")
                 os.remove("track_string.npy")
                 np.save('track_string.npy', np.array(self.track_string))
                 AI_PARSE.need_to_map = True
         except:
             np.save('track_string.npy', np.array(self.track_string))
+            track_string_file = str("john")
             AI_PARSE.need_to_map = True
             
                 
@@ -54,11 +55,43 @@ class AI_PARSE():
 
         if (AI_PARSE.need_to_map):
             logger.info("STARTED MAPPING")
-            AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+            if (track_string_file == track_string):
+                logger.info("TRYING TO LOAD TRACK AND PATH")
+                if os.path.isfile("track.npy"):
+                    AI_PARSE.track = np.load("track.npy")
+                    logger.info("Loaded previous track")
+                    AI_PARSE.path = []
+                    with open(r'path.txt', 'r') as fp:
+                        for line in fp:
+                            x = line
+                            logger.info(x)
+                            AI_PARSE.path.append(eval(x))
+                    fp.close()
+                    logger.info("Loaded previous path")
+                    logger.info("Loaded previous mapping")
+                else:
+                    AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+                    np.save("track.npy", AI_PARSE.track)
+                    with open(r'path.txt', 'w') as fp:
+                        fp.write("".join(str(item) for item in AI_PARSE.path))
+                    fp.close()
+            else:
+                logger.debug("TRACK STRING HAS CHANGED")
+                if (os.path.exists("track.npy")):  
+                    os.remove("track.npy")
+                if (os.path.exists("path.txt")):
+                    os.remove("path.txt")
+                AI_PARSE.track, AI_PARSE.path = mapping(track_string)
+                np.save("track.npy", AI_PARSE.track)
+                with open(r'path.txt', 'w') as fp:
+                        fp.write("\n".join(str(item) for item in AI_PARSE.path))
+                fp.close()   
             # logger.debug("NP SHAPE PATH")
             # logger.debug(np.shape(AI_PARSE.path))
+
+            logger.info(np.shape(AI_PARSE.path))
             self.command = []
-            self.command.append([True, False, False, False])
+            self.command.append([False, False, False, False])
             self.largeur = AI_PARSE.track.shape[1]
             self.hauteur = AI_PARSE.track.shape[0]
             
@@ -101,6 +134,7 @@ class AI_PARSE():
             #logger.debug(np.shape(AI_PARSE.path))
 
             obj_pos = AI_PARSE.path[0]
+            logger.debug("LENGTH AI PARSE PATH %i", len(AI_PARSE.path))
             px = float(obj_pos[0])
             py = float(obj_pos[1])
             next_theta, _ = self.calculate_angle(self.kart.position,[px,py])
@@ -111,7 +145,7 @@ class AI_PARSE():
 
             Vel_dir = self.kart.velocity / (max(np.abs(self.kart.velocity)) + 1e-3)
 
-            Ratio = max(min(np.linalg.norm(self.kart.velocity)*13, 200), 55)
+            Ratio = max(min(np.linalg.norm(self.kart.velocity)*20, 250), 35)
 
             logger.debug(Vel_dir)
             logger.debug(Ratio)
@@ -123,18 +157,36 @@ class AI_PARSE():
             except:
                 pass
 
+            diydar_lava_front, dist_to_lava_diydar = self.diydar(future)
 
-            pos_rotated_velocity_vector = np.array([int(future[0]  * np.cos(0.65) - future[1] * np.sin(0.65)),int(future[0] * np.sin(0.65) + future[1] * np.cos(0.65))])
+            k = 0.2
 
-            neg_rotated_velocity_vector = np.array([int(future[0] * np.cos(-0.65) - future[1] * np.sin(-0.65)), int(future[0] * np.sin(-0.65) + future[1] * np.cos(-0.65))])
+            angle = 0.30 + 0.5 * (1 - np.exp(-k * np.linalg.norm(self.kart.velocity)))
+
+
+            if np.linalg.norm(self.kart.velocity) < 2:
+                angle = 1.2
+
+            logger.debug("ANGLE %f", angle)
+            scale = 1/1
+
+
+            pos_rotated_velocity_vector = np.array([int(scale*((future[0]  * np.cos(angle)) - future[1] * np.sin(angle))),int(scale*(future[0] * np.sin(angle) + future[1] * np.cos(angle)))])
+
+            neg_rotated_velocity_vector = np.array([(int(scale*(future[0] * np.cos(-angle) - future[1] * np.sin(-angle)))), int(scale*(future[0] * np.sin(-angle) + future[1] * np.cos(-angle)))])
+
 
             try:
-                pos_future_rotated_point = self.kart.map[pos_rotated_velocity_vector[0]+cur_pos_x][pos_rotated_velocity_vector[1]+cur_pos_y]      
+                pos_future_rotated_point = self.kart.map[pos_rotated_velocity_vector[0]+cur_pos_x][pos_rotated_velocity_vector[1]+cur_pos_y] 
+                if pos_future_rotated_point == 0:
+                    pos_future_rotated_point = 15
             except:
                 pass
                 
             try:
                 neg_future_rotated_point = self.kart.map[neg_rotated_velocity_vector[0]+cur_pos_x][neg_rotated_velocity_vector[1]+cur_pos_y]
+                if neg_future_rotated_point == 0:
+                    neg_future_rotated_point = 15
             except:
                 pass
 
@@ -143,12 +195,13 @@ class AI_PARSE():
             delta = next_theta - self.kart.orientation
             if delta>np.pi:
                 delta = delta - 2*np.pi
-
             elif delta < -1*np.pi:
                 delta =  2*np.pi + delta 
 
 
             braking = self.kart.check_radar_speed(delta)
+
+            logger.debug("braking 1 %s", braking)
 
 
             lava_front, distance_front = self.lava_along_vector(future)
@@ -158,30 +211,25 @@ class AI_PARSE():
             
             if lava_front:
                 lava_pos = ((future/np.linalg.norm(future)) * distance_front) + self.kart.position
-            if lava_left:
-                lava_pos_l = ((future/np.linalg.norm(future)) * distance_left) + self.kart.position
-            if lava_right:
-                lava_pos_r = ((future/np.linalg.norm(future)) * distance_right) + self.kart.position
+            elif lava_left:
+                lava_pos = ((pos_rotated_velocity_vector/np.linalg.norm(pos_rotated_velocity_vector)) * distance_left) + self.kart.position
+            elif lava_right:
+                lava_pos = ((neg_rotated_velocity_vector/np.linalg.norm(neg_rotated_velocity_vector)) * distance_right) + self.kart.position
 
+            logger.debug("pos X %i,pos Y %i", cur_pos_x,cur_pos_y)  
+            logger.debug("CURRENT POINT %i, CURRENT VEL %f", current_point, np.linalg.norm(self.kart.velocity))
 
-            logger.debug("pos X %i", cur_pos_x)  
-            logger.debug("pos Y %i", cur_pos_y)
-            logger.debug("CURRENT POINT %i", current_point)
-            logger.debug("CURRENT VEL %d", np.linalg.norm(self.kart.velocity))
-
-
-            logger.debug("future X %i", future[0]+cur_pos_x)  
-            logger.debug("future Y %i", future[1]+cur_pos_y)
+            logger.debug("future X %i, future Y %i", future[0]+cur_pos_x, future[1]+cur_pos_y)  
             logger.debug("FUTURE POINT %i", future_point)
 
-            logger.debug("onject X %i", px)
-            logger.debug("object Y %i", py)
+            # logger.debug("onject X %i", px)
+            # logger.debug("object Y %i", py)
             logger.debug("delta %f", delta)
 
-            logger.debug("FUTURE ROTATED pos POINT %i", pos_future_rotated_point)
-            logger.debug("FUTURE ROTATED Neg POINT %i", neg_future_rotated_point)
+            logger.debug("FUTURE ROTATED pos POINT %i, FUTURE ROTATED Neg POINT %i", pos_future_rotated_point, neg_future_rotated_point)
 
             logger.debug("lava along front: %s", lava_front)
+            logger.debug("lava along front [DIYDAR]: %s", diydar_lava_front)
             logger.debug("lava along left: %s", lava_left)
             logger.debug("lava along right: %s", lava_right)
 
@@ -189,43 +237,81 @@ class AI_PARSE():
             logger.debug("Lava position (left) %s", lava_pos_l)
             logger.debug("Lava position (right) %s", lava_pos_r)
 
+            sum = 0
+            V_0 = np.linalg.norm(self.kart.velocity)
+
+            for h in range(int(V_0/0.25)):
+                sum += V_0 - h*0.25
+            dist_to_stop = sum
+
+            if len(lava_pos) >0:
+                dist_to_lava = np.linalg.norm([lava_pos[0]-self.kart.position[0], lava_pos[1] - self.kart.position[1]])
+                
 
 
             if (lava_front):
-                braking = True
+                braking = (True,False)[1.1*dist_to_stop<dist_to_lava]
+            if (diydar_lava_front):
+                braking = (True,False)[1.1*dist_to_stop<dist_to_lava_diydar]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING") 
-                if (delta<0 and lava_right):
-                    braking = True
-                    logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
-                elif (delta>0 and lava_left):
-                    braking = True
-                    logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")           
-            elif (lava_right and delta<0):
-                braking = True
+                # if (delta<0 and lava_right):
+                #     braking = True
+                #     logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
+                # elif (delta>0 and lava_left):
+                #     braking = True
+                #     logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")           
+            elif (lava_right and delta<0.05):
+                delta += +0.5
+                braking = (True,False)[1.1*dist_to_stop<dist_to_lava]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
-            elif (lava_left and delta>0):
-                braking = True
+            elif (lava_left and delta>0.05):
+                delta += -0.5
+                braking = (True,False)[1.1*dist_to_stop<dist_to_lava]
                 logger.debug("BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING BRAKING")
+
+            logger.debug("braking 2 %s", braking)
+
             
+
+
+
+
             if len(lava_pos)>0:
                 intersect, intersection_point = self.line_intersects_circle(self.kart.position, future, lava_pos)
+                intersect_left, _ = self.line_intersects_circle(self.kart.position, pos_rotated_velocity_vector, lava_pos)
+                intersect_right, _ = self.line_intersects_circle(self.kart.position, neg_rotated_velocity_vector, lava_pos)
                 distance = np.sqrt((intersection_point[0]-cur_pos_x)**2 + (intersection_point[1]-cur_pos_y)**2)
 
-            if (len(lava_pos)>0 and intersect and distance<40):
+            if (len(lava_pos)>0 and intersect):
                 logger.debug('INTERSECTION WITH LAVA')
                 logger.debug("Lava pos: %s", lava_pos)
+                logger.debug("Lava distance: %s", distance)
+
                 if lava_right and lava_left:
-                    delta = 0.5 * np.sign(delta)
+                    delta += -0.5 * (np.sign(delta+1e-3))
+                    logger.debug("CHOICE1 %f", delta)
                 elif lava_right and not lava_left:
-                    delta = +0.5
+                    delta += +0.5
+                    logger.debug("CHOICE2 %f", delta)
                 elif lava_left and not lava_right: 
-                    delta = -0.5
+                    delta += -0.5
+                    logger.debug("CHOICE3 %f", delta)
+                elif intersect_left and not intersect_right:
+                    delta += -0.5
+                    logger.debug("CHOICE5 %f", delta)
+                elif intersect_right and not intersect_left:
+                    delta += 0.5
+                    logger.debug("CHOICE6 %f", delta)
                 else:
-                    delta = (+0.5, -0.5)[pos_future_rotated_point<neg_future_rotated_point]
+                    delta += (+0.5, -0.5)[pos_future_rotated_point<neg_future_rotated_point]
+                    logger.debug("CHOICE4 %f", delta)
+            
+
+            # if (np.linalg.norm(self.kart.velocity) < 0.4 and step>10):
+            #     time.sleep(5)
 
 
-
-            if np.abs(delta) > 0.02:
+            if np.abs(delta) > 0.05:
                 if delta >= 0:
                     self.kart.turn_right() # WHICH MEANS TURN LEFT (for some reason)
                     commanded_keys[-1] = True 
@@ -235,7 +321,7 @@ class AI_PARSE():
             
             
             #Speed control
-            if braking:
+            if braking and np.linalg.norm(self.kart.velocity) > 0.3:
                 self.kart.backward()
                 commanded_keys[1] = True
             else:
@@ -245,18 +331,18 @@ class AI_PARSE():
             self.command.append(commanded_keys)
             self.kart.update_pos_AI()
             self.kart.radar_points()
-            x_ = int(np.copy(self.kart.position[0]))
-            y_ = int(np.copy(self.kart.position[1]))
+            x_ = (np.copy(self.kart.position[0]))
+            y_ = (np.copy(self.kart.position[1]))
             x.append(-1*self.kart.position[0])
             y.append(self.kart.position[1])
-
+            logger.info(self.kart.map[x_][y_])
             if self.kart.map[x_][y_]==104:
                 success = True
                 logger.info('Successfully finished the map')
                 break
-            elif self.kart.map[x_][y_] == 10:
+            elif self.kart.map[int(x_)][int(y_)] == 10:
                 logger.info("LAVA")
-                time.sleep(2)
+                #time.sleep(2)
             step +=1
         
         np.save('ai_commands.npy', np.array(self.command))
@@ -273,17 +359,30 @@ class AI_PARSE():
         return keys
     
     def lava_along_vector(self, vector):
-        for i in range(int(np.linalg.norm(vector))+1):
+        for i in np.linspace(0,int(np.linalg.norm(vector)),20):
                 normalized = i/(int(np.linalg.norm(vector))+1e-3)
+
                 along_line = np.array(self.kart.position + normalized*vector, dtype=np.int16) 
                 try: 
                     if (self.kart.map[along_line[0]][along_line[1]] == 10):
                         return True, i
                 except:
+                    logger.debug("JHIEOIADAJDJIWADIAJDA")
+
+        return False, 1e9
+    
+    def checkpoint_along_vector(self, vector):
+        for i in range(int(np.linalg.norm(vector))+1):
+                normalized = i/(int(np.linalg.norm(vector))+1e-3)
+                along_line = np.array(self.kart.position + normalized*vector, dtype=np.int16) 
+                try: 
+                    if (self.kart.map[along_line[0]][along_line[1]] >= 101 and self.kart.map[along_line[0]][along_line[1]] <= 104):
+                        return True, i
+                except:
                     pass
         return False, 1e9
     
-    def line_intersects_circle(self, X, vector, circle_center, circle_radius=10):
+    def line_intersects_circle(self, X, vector, circle_center, circle_radius=15):
         
         #Ref mathworld.worldfram.com Circle-Line Intersection
         #we have our circle in circle_center, so we can simply subtract that
@@ -291,8 +390,8 @@ class AI_PARSE():
         x1 = X[0] - circle_center[0]
         y1 = X[1] - circle_center[1]
 
-        x2 = vector[0] + X[0] - circle_center[0]
-        y2 = vector[1] + X[1] - circle_center[1]
+        x2 = vector[0]*2 + X[0] - circle_center[0]
+        y2 = vector[1]*2 + X[1] - circle_center[1]
 
         dx = x2 - x1
         dy = y2 - y1
@@ -328,3 +427,22 @@ class AI_PARSE():
         norm = np.linalg.norm(vector)
         
         return angle,norm
+    
+    def diydar(self, future):
+        for i in np.linspace(np.pi/10, np.pi/6, 6):
+            vector = np.array([int(future[0]  * np.cos(i) - future[1] * np.sin(i)),int(future[0] * np.sin(i) + future[1] * np.cos(i))])
+
+            lava_detected, distance = self.lava_along_vector(vector)
+
+            if lava_detected:
+                return lava_detected, distance
+            
+            hector = np.array([int(future[0]  * np.cos(-i) - future[1] * np.sin(-i)),int(future[0] * np.sin(-i) + future[1] * np.cos(-i))])
+            
+            lava_detected, distance = self.lava_along_vector(hector)
+
+            if lava_detected:
+                return lava_detected, distance
+
+        return False, 50000
+

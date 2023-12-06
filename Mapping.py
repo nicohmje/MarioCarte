@@ -9,9 +9,11 @@ def fenetre(position,track):
     x = position[0]
     y = position[1]
     fenetre = np.zeros([3,3])
-    for i in range(3):
-        for j in range(3):
-            fenetre[i][j]=int(track[x+i][y+j])
+    fenetre = track[x:x+3, y:y+3]
+
+    # for i in range(3):
+    #     for j in range(3):
+    #         fenetre[i][j]=int(track[x+i][y+j])
     return fenetre
 
 
@@ -148,7 +150,7 @@ def mapping(track_string):
     logger.debug(goal)
 
     # Define block costs
-    block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
+    block_costs = {0: 2000, 15: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
 
     # Find the path using A*
     path = astar(useable_track, start, goal, block_costs)

@@ -226,7 +226,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         self.checkpoint_orient = np.copy(self.orientation)
 
 
-            self.acceleration = round((self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))),6)
+            self.acceleration = (self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v)))
             vel = self.acceleration + np.linalg.norm(self.velocity) 
             
             logger.debug("Kart number %i: vel: %s ; orientation: %s ; theta_v: %s", self.id, vel, self.orientation, theta_v)
@@ -352,16 +352,24 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         Vel_dir = self.velocity / (max(np.abs(self.velocity)) +1e-3)
 
-        Ratio = max(min(np.linalg.norm(self.velocity)*13, 200), 55)
+        Ratio = max(min(np.linalg.norm(self.velocity)*20, 230), 45)
 
         future_x = int(Ratio*Vel_dir[0])
         future_y = int(Ratio*Vel_dir[1])
 
-        pos_rotated_velocity_vector_x = int(future_x  * np.cos(0.65) - future_y * np.sin(0.65))
-        pos_rotated_velocity_vector_y = int(future_x * np.sin(0.65) + future_y * np.cos(0.65))
 
-        neg_rotated_velocity_vector_x = int(future_x * np.cos(-0.65) - future_y * np.sin(-0.65))
-        neg_rotated_velocity_vector_y = int(future_x * np.sin(-0.65) + future_y * np.cos(-0.65))
+        k = 0.2
+        angle = 0.30 + 0.5 * (1 - np.exp(-k * np.linalg.norm(self.velocity)))
+        scale = 1/1
+
+        if np.linalg.norm(self.velocity) < 2:
+                angle = 1.2
+
+        pos_rotated_velocity_vector_x = int(scale*int(future_x  * np.cos(angle) - future_y * np.sin(angle)))
+        pos_rotated_velocity_vector_y = int(scale*int(future_x * np.sin(angle) + future_y * np.cos(angle)))
+
+        neg_rotated_velocity_vector_x = int(scale*int(future_x * np.cos(-angle) - future_y * np.sin(-angle)))
+        neg_rotated_velocity_vector_y = int(scale*int(future_x * np.sin(-angle) + future_y * np.cos(-angle)))
 
         pygame.draw.circle(screen, (255, 255, 255), [future_x+self.position[0],future_y+self.position[1]], 2.0)
         pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.position[0],pos_rotated_velocity_vector_y+self.position[1]], 2.0)

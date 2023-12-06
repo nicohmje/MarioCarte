@@ -17,12 +17,14 @@ class AI():
             self.ai.parse()
         else:
             logger.debug("No need to map")
-        self.step = -1
+        self.step = 0
 
-    def reset(self, step=-1):
+    def reset(self, step=0):
         self.step = step
 
     def move(self, string):
-        self.step += 1
-        time.sleep(0.02)
-        return self.ai.move(self.step)
+        time.sleep(0.06)
+        keys = self.ai.move(self.step)
+        self.step+=1
+        return keys
+        
