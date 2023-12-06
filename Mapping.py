@@ -107,7 +107,7 @@ def mapping(track_string):
 
     for h in range(height-2):
         for w in range(width-2):
-            F = fenetre([h,w],track_apex)
+            F = track_apex[h:h+3, w:w+3]
             if np.all(F == Corner_1):
                 corners_coord.append([w+1,h-1])
                 corners_coord.append([w+2,h])
@@ -164,8 +164,13 @@ def mapping(track_string):
     ###Adding A* info to the map
 
     track_traj = np.copy(track_array)
+
+
+    # logger.debug("TRACK TRAJ %s", track_traj)
+
     track_passed = np.repeat(np.repeat(track_traj,50,axis=0),50,axis=1)
 
+    logger.debug("TRACK PASSED SIZE %s", np.shape(track_passed))
 
     ###Creating intermediate points to increase the learning
     #p = path.copy()
@@ -173,11 +178,16 @@ def mapping(track_string):
     p = []
     x_ini = path[0]
     p.append(x_ini)
+    old_arr = np.array([0.,0.])
     for x in path:
-        if (np.absolute(x[0]-x_ini[0])+np.absolute(x[1]-x_ini[1])>150.):
-
+        arr = np.array([x[0]-x_ini[0], x[1]-x_ini[1]])
+        if (np.linalg.norm(arr)>100.):
             p.append(x)
             x_ini = x
+        elif np.arccos(np.dot(arr,old_arr) /( (np.linalg.norm(arr) * np.linalg.norm(old_arr)))) > 0.7:
+            p.append(x)
+            x_ini = x
+        old_arr = arr
 
     finish_positions = np.argwhere(track_array == 104)
 
@@ -200,18 +210,18 @@ def mapping(track_string):
 
     p.append(finish)
 
-    size = 20
-    nbr = 0
-    for point in p:
-        x, y = point
-        track_passed[x - int(size/2):x + int(size/2) + 1, y - int(size/2):y + int(size/2) + 1] = 1000 + nbr
-        nbr += size ** 2
-        # for i in range(size):
-        #     for j in range(size):
-        #         track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
-        #         nbr+=1
+    # size = 20
+    # for point in p:
+    #     # x, y = point
+    #     nbr = 0
+    #     # track_passed[x - int(size/2):x + int(size/2) + 1, y - int(size/2):y + int(size/2) + 1] = 1000 + nbr
+    #     # nbr += size ** 2
+    #     for i in range(size):
+    #         for j in range(size):
+    #             track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
+    #             nbr+=1
 
-    
+    logger.debug("TRACK %s", track_passed[140:145,153:158])
 
     return track_passed,p
 
