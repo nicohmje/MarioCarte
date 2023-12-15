@@ -1,8 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from typing import NamedTuple
 # import random
-import time
+# import time
 # import math
 from Mapping import mapping
 from kart import Kart
@@ -127,9 +127,8 @@ class AI_PARSE():
 
             obj_pos = AI_PARSE.path[0]
             logger.debug("LENGTH AI PARSE PATH %i", len(AI_PARSE.path))
-            px = float(obj_pos[0])
-            py = float(obj_pos[1])
-            next_theta, _ = self.calculate_angle(self.kart.position,[px,py])
+            
+
 
             cur_pos_x = (self.kart.position[0])
             cur_pos_y = (self.kart.position[1])
@@ -137,6 +136,12 @@ class AI_PARSE():
 
             normalized_velocity = self.kart.velocity / (max(np.abs(self.kart.velocity)) + 1e-3)
             velocity_norm = np.linalg.norm(self.kart.velocity)
+
+
+            px = float(obj_pos[0])
+            py = float(obj_pos[1])
+            next_theta, _ = self.calculate_angle(self.kart.position,[px,py])
+
 
             Ratio = max(min(velocity_norm*20, 250), 35)
 
@@ -424,7 +429,7 @@ class AI_PARSE():
                     smallest = -100
         return (1, smallest)[smallest < 1e8]
     
-    def line_intersects_circle(self, X, vector, circle_center, circle_radius=10):
+    def line_intersects_circle(self, X, vector, circle_center, circle_radius=4):
         
         #Ref mathworld.worldfram.com Circle-Line Intersection
         #we have our circle in circle_center, so we can simply subtract that
@@ -469,6 +474,36 @@ class AI_PARSE():
         norm = np.linalg.norm(vector)
         
         return angle,norm
+    
+    def check_along_vector(self, vector):
+        distance = 10
+        while True:
+                distance += 5
+                along_line = np.array(self.kart.position + distance*vector, dtype=np.int16) 
+                try: 
+                    block = self.kart.map[along_line[0]][along_line[1]] 
+                    if (block < 255):
+                        break 
+                except:
+                    return -10, distance
+        return block, distance
+    
+
+    # def lidar(self, future):
+    #     map = ()
+    #     for i in np.linspace(0, np.pi/3, 40):
+    #         vector = np.array([int(future[0]  * np.cos(i) - future[1] * np.sin(i)),int(future[0] * np.sin(i) + future[1] * np.cos(i))])
+    #         hector = np.array([int(future[0]  * np.cos(-i) - future[1] * np.sin(-i)),int(future[0] * np.sin(-i) + future[1] * np.cos(-i))])
+            
+    #         block_l, dist_l = self.check_along_vector(vector)
+    #         block_r, dist_r = self.check_along_vector(hector)
+
+            
+
+
+
+
+
     
     def diydar(self, future):
         for i in np.linspace(np.pi/10, np.pi/6, 6):

@@ -449,29 +449,29 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         
     def radar_points(self):
         dist_min_y = 150
-        dist_min_x = 60
+        dist_min_x = 70
 
         #x is forward
         #y is right 
 
-        for p in self.path:
-            px = float(p[0])
-            py = float(p[1])
+        p = self.path[0] 
+        px = float(p[0])
+        py = float(p[1])
 
-            obj_vec = np.array([px - self.position[0], py - self.position[1]]) #Kart to object
-            #angle_to_lava = np.arccos(np.dot(self.velocity, obj_vec)/ (np.linalg.norm(self.velocity) * np.linalg.norm(obj_vec)))
-            
+        obj_vec = np.array([px - self.position[0], py - self.position[1]]) #Kart to object
+        #angle_to_lava = np.arccos(np.dot(self.velocity, obj_vec)/ (np.linalg.norm(self.velocity) * np.linalg.norm(obj_vec)))
+        
 
-            #We now compute the Kart to object vector in the Kart frame
-            obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.orientation) - obj_vec[1]*np.sin(-1*self.orientation), obj_vec[0]*np.sin(-1*self.orientation) + obj_vec[1] * np.cos(-1*self.orientation)])
-            
-            #Ellipse equation 
-            #obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1
-            
-            #If the point is inside that ellipse, we'll delete it, as long as it isn't the last point. 
-            if (obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1) and (p!=self.path[-1]):
-                self.path.remove(p)
-                #print('removed :',p)
+        #We now compute the Kart to object vector in the Kart frame
+        obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.orientation) - obj_vec[1]*np.sin(-1*self.orientation), obj_vec[0]*np.sin(-1*self.orientation) + obj_vec[1] * np.cos(-1*self.orientation)])
+        
+        #Ellipse equation 
+        #obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1
+        
+        #If the point is inside that ellipse, we'll delete it, as long as it isn't the last point. 
+        if (obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1) and (p!=self.path[-1]):
+            self.path.remove(p)
+            #print('removed :',p)
 
     def create_map(self,useable_array):
         self.map = useable_array

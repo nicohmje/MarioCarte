@@ -210,15 +210,22 @@ def mapping(track_string,ini_pos):
     x_ini = path[0]
     p.append(x_ini)
     cp = 101
+    old_arr = np.array([0.0,0.0])
     for x in path:
         arr = np.array([x[0]-x_ini[0], x[1]-x_ini[1]])
+        angle_between_points = np.arccos(np.dot(arr, old_arr)/ (np.linalg.norm(arr)*np.linalg.norm(old_arr)))
         if (np.linalg.norm(arr)>100.):
             p.append(x)
-            x_ini = x        
+            x_ini = x      
+        # elif angle_between_points > 0.5:
+        #     p.append(x)
+        #     logger.info("DISTANCE TOO BIG %s", angle_between_points)
+        #     x_ini = x
         elif (track_passed[x[0]][x[1]] == cp):
             p.append(x)
             x_ini = x 
             cp += 1
+        old_arr = arr
 
 
     finish_positions = np.argwhere(track_array == 104)
