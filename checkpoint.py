@@ -5,7 +5,6 @@ from grass import Grass
 class Checkpoint():  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
     __color = (255, 184, 104)
-    id = 0
 
     @classmethod
     def surface_type_(cls):
