@@ -238,7 +238,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         self.__checkpoint = 0
                         pass
                     elif cur_checkpoint>self.__checkpoint:
-                        logger.info("Checkpoint reached: %i" , cur_checkpoint)
+                        if (not self.__controller.is_ai):
+                            logger.info("Checkpoint reached: %i" , cur_checkpoint)
                         pygame.mixer.Sound.play(Checkpoint.sound)
                         self.__checkpoint = cur_checkpoint
                         self.__checkpoint_step = self.__controller.step
@@ -321,7 +322,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             Kart.__splash_screen = pygame.image.load("textures/splash_screen.jpg").convert()
 
 
-
             Kart.texture_top_fast = pygame.image.load("textures/Kart/forw_fast.png").convert_alpha()
             Kart.texture_top_slow = pygame.image.load("textures/Kart/forw_slow.png").convert_alpha()
             Kart.texture_top_stop = pygame.image.load("textures/Kart/stationnary.png").convert_alpha()
@@ -364,7 +364,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
         # quadr = Common.quadrant(float(self.__orientation))
-        vel_scale = 0 
+        vel_scale = 0
 
         if (np.linalg.norm(self.__velocity)>2 and np.linalg.norm(self.__velocity)<5):
             vel_scale = 1
@@ -382,7 +382,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         future_x = int(Ratio*Vel_dir[0])
         future_y = int(Ratio*Vel_dir[1])
 
-
         k = 0.5
         angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
         vec_scale = 1/1
@@ -399,7 +398,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             skew = (-1.,1.) 
             vec_scale = 0.8
 
-
+        if (not self.__controller.is_ai):
+            pygame.draw.circle(screen, (255,255,0), [self.__position[0], self.__position[1]-30], 5)
 
         pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
         pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
@@ -410,8 +410,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
         pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
         pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
-
-
 
         self.__input = 0 
 
