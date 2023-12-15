@@ -33,159 +33,173 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     """
 
     __nbr_of_karts = 0
-
-    @classmethod
-    def nbr_of_karts_(cls):
-        return cls.__nbr_of_karts
-
-    kart_texture_top = None
-    kart_texture_side = None
-    splash_screen = None
-    screen_size = None
+    __splash_screen = None
+    __screen_size = None
 
     sound = None
-    started = False
+    __started = False
 
+    @property 
+    def has_finished(self):
+        return self.__has_finished
+    
+    @property 
+    def controller(self):
+        return self.__controller
+    
+    @property 
+    def position(self):
+        return self.__position
+    
+    @property 
+    def velocity(self):
+        return self.__velocity
+    
+    @property 
+    def orientation(self):
+        return self.__orientation
+    
 
     def __init__(self, controller):
 
-        self.has_finished = False
-        self.controller = controller
+        self.__has_finished = False
 
-        Kart.nbr_of_karts += 1
+        self.__controller = controller
 
-        self.id = Kart.nbr_of_karts
+        Kart.__nbr_of_karts += 1
 
-        self.position = np.array([0.,0.], dtype=float)       
-        self.orientation = 0
+        self.__id = Kart.__nbr_of_karts
 
-        self.velocity = np.array([0.,0.], dtype=float)
+        self.__position = np.array([0.,0.], dtype=float)       
+        self.__orientation = 0
 
-        self.acceleration = 0
-        self.acceleration_c = 0
+        self.__velocity = np.array([0.,0.], dtype=float)
 
-        self.checkpoint = 0 
-        self.checkpoint_pos = np.array([150,150])
-        self.checkpoint_orient = 0.
-        self.checkpoint_step = 0
+        self.__acceleration = 0
+        self.__acceleration_c = 0
+
+        self.__checkpoint = 0 
+        self.__checkpoint_pos = np.array([150,150])
+        self.__checkpoint_orient = 0.
+        self.__checkpoint_step = 0
         
 
-        self.start_time = time.time_ns()
+        self.__start_time = time.time_ns()
         self.__end_time = 0.0
 
-        self.char_map = np.empty((10000,10000), dtype=str)
+        self.__char_map = np.empty((10000,10000), dtype=str)
 
-        self.initialized = False
+        self.__initialized = False
 
-        self.best_time = 0.0
+        self.__best_time = 0.0
 
         self.__input = 0 #1 FORW 2 LEFT 3 RIGHT 4 BACK
-        self.music_playing = False
+        self.__music_playing = False
 
         pass
        
     def reset(self, initial_position, initial_orientation, step=0):
-        self.position = np.copy(initial_position)
-        self.orientation = np.copy(initial_orientation)        
-        self.velocity = np.array([0.,0.])
-        if self.initialized:
-            self.controller.reset(step)
+        self.__position = np.copy(initial_position)
+        self.__orientation = np.copy(initial_orientation)        
+        self.__velocity = np.array([0.,0.])
+        if self.__initialized:
+            self.__controller.reset(step)
             # time.sleep(4)
         pass
         
     def forward(self):
-        self.acceleration_c += MAX_ACCELERATION
+        self.__acceleration_c += MAX_ACCELERATION
         self.__input = 1
 
-        logger.debug("Kart number %i: FORWARDS", self.id)
+        logger.debug("Kart number %i: FORWARDS", self.__id)
 
         pass
     
     def backward(self):
-        self.acceleration_c += -MAX_ACCELERATION
+        self.__acceleration_c += -MAX_ACCELERATION
         self.__input = 4
 
          
-        logger.debug("Kart number %i: BACKWARDS", self.id)
+        logger.debug("Kart number %i: BACKWARDS", self.__id)
 
         pass
     
     def turn_left(self):
-        self.orientation = self.orientation - MAX_ANGLE_VELOCITY
+        self.__orientation = self.__orientation - MAX_ANGLE_VELOCITY
         self.__input = 2
 
          
-        logger.debug("Kart number %i: LEFT", self.id)
+        logger.debug("Kart number %i: LEFT", self.__id)
 
         pass
         
     def turn_right(self):
-        self.orientation = self.orientation + MAX_ANGLE_VELOCITY
+        self.__orientation = self.__orientation + MAX_ANGLE_VELOCITY
         self.__input = 3
          
-        logger.debug("Kart number %i: RIGHT", self.id)
+        logger.debug("Kart number %i: RIGHT", self.__id)
 
         pass
     
     def update_position(self, string, screen):
          
-        #logger.debug("Kart number %i: POSITION TYPE: %s", self.id, self.position.dtype)
+        #logger.debug("Kart number %i: POSITION TYPE: %s", self.__id, self.__position.dtype)
 
-        if(not self.position.dtype == "float64"): 
-            self.position = self.position.astype(float)
+        if(not self.__position.dtype == "float64"): 
+            self.__position = self.__position.astype(float)
 
-        if(not self.velocity.dtype == "float64"): 
-            self.velocity = self.velocity.astype(float)
+        if(not self.__velocity.dtype == "float64"): 
+            self.__velocity = self.__velocity.astype(float)
 
         #INITIALIZATION 
-        if (not self.initialized):
+        if (not self.__initialized):
             if 'C' in string:
-                self.checkpoint_nbr = 1
+                self.__checkpoint_nbr = 1
             if 'D' in string:
-                self.checkpoint_nbr = 2
+                self.__checkpoint_nbr = 2
             if 'E' in string:
-                self.checkpoint_nbr = 3
+                self.__checkpoint_nbr = 3
             if 'F' in string:
-                self.checkpoint_nbr = 4
+                self.__checkpoint_nbr = 4
             
             i,j = 0,0
             for char in string:
                 if char.isalpha():
-                    self.char_map[i,j] = char
+                    self.__char_map[i,j] = char
                 if char == "\n":
                     j += 1
                     i = 0
                 else:
                     i += 1
-            self.char_map = self.char_map[0:i+1, 0:j+1]
+            self.__char_map = self.__char_map[0:i+1, 0:j+1]
             pygame.mixer.music.load("sounds/grass.wav")
 
-        if Kart.started:
+        if Kart.__started:
             boosting = False    
 
-            self.orientation = Common.RadiansLim(self.orientation)
+            self.__orientation = Common.RadiansLim(self.__orientation)
 
-            self.next_checkpoint_id = self.checkpoint + 1
+            self.next_checkpoint_id = self.__checkpoint + 1
 
-            theta_v = math.atan2(self.velocity[1], self.velocity[0])
+            theta_v = math.atan2(self.__velocity[1], self.__velocity[0])
 
-            if self.screen_size is None:
-                self.screen_size = screen.get_size()
+            if Kart.__screen_size is None:
+                Kart.__screen_size = screen.get_size()
 
-            string_letter = ord(self.char_map[int(np.floor(self.position[0]/track.BLOCK_SIZE)), int(np.floor(self.position[1]/track.BLOCK_SIZE))])
+            string_letter = ord(self.__char_map[int(np.floor(self.__position[0]/track.BLOCK_SIZE)), int(np.floor(self.__position[1]/track.BLOCK_SIZE))])
 
 
-            if string_letter == ord('G') and not self.music_playing:
+            if string_letter == ord('G') and not self.__music_playing:
                 pygame.mixer.music.play(-1)
                 f = Grass.surface_type_()
-                self.music_playing = True
-            elif string_letter == ord('G') and self.music_playing:
+                self.__music_playing = True
+            elif string_letter == ord('G') and self.__music_playing:
                 f = Grass.surface_type_()
 
-            if not string_letter == ord('G') and self.music_playing :
+            if not string_letter == ord('G') and self.__music_playing :
                 #logger.debug("Kart number %i: stop grass sound")
                 pygame.mixer.music.fadeout(300)
-                self.music_playing = False
+                self.__music_playing = False
 
             match string_letter:
                 case 66: #ASCII FOR B
@@ -199,50 +213,50 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 case 76: #ASCII FOR L
                     pygame.mixer.Sound.play(Lava.sound)
                     f = Checkpoint.surface_type_()
-                    self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient, self.checkpoint_step)
+                    self.reset(np.array(self.__checkpoint_pos), self.__checkpoint_orient, self.__checkpoint_step)
 
                 case 67|68|69|70:
                     f = Checkpoint.surface_type_()
                     cur_checkpoint = (string_letter - ord('C')) + 1
-                    if cur_checkpoint > self.checkpoint + 1:
+                    if cur_checkpoint > self.__checkpoint + 1:
                         pass
-                    elif cur_checkpoint == self.checkpoint_nbr:
+                    elif cur_checkpoint == self.__checkpoint_nbr:
                         self.__end_time = time.time_ns()
 
-                        self.has_finished = False
+                        self.__has_finished = False
 
-                        time_took = self.__end_time - self.start_time
-                        if (time_took*1e-9 < self.best_time or self.best_time == 0.0):
-                            self.best_time = time_took*1e-9
+                        time_took = self.__end_time - self.__start_time
+                        if (time_took*1e-9 < self.__best_time or self.__best_time == 0.0):
+                            self.__best_time = time_took*1e-9
 
                         logger.info("Finished in %fs", time_took*1e-9)
-                        self.start_time = time.time_ns()
+                        self.__start_time = time.time_ns()
                         self.reset([150.,150.], 0., -1)
-                        self.checkpoint = 0
+                        self.__checkpoint = 0
                         pass
-                    elif cur_checkpoint>self.checkpoint:
+                    elif cur_checkpoint>self.__checkpoint:
                         logger.info("Checkpoint reached: %i" , cur_checkpoint)
                         pygame.mixer.Sound.play(Checkpoint.sound)
-                        self.checkpoint = cur_checkpoint
-                        self.checkpoint_step = self.controller.step
-                        self.checkpoint_pos[0] = np.copy(self.position[0])
-                        self.checkpoint_pos[1] = np.copy(self.position[1])
-                        self.checkpoint_orient = np.copy(self.orientation)
+                        self.__checkpoint = cur_checkpoint
+                        self.__checkpoint_step = self.__controller.step
+                        self.__checkpoint_pos[0] = np.copy(self.__position[0])
+                        self.__checkpoint_pos[1] = np.copy(self.__position[1])
+                        self.__checkpoint_orient = np.copy(self.__orientation)
 
 
-            self.acceleration = (self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v)))
-            vel = self.acceleration + np.linalg.norm(self.velocity) 
+            self.__acceleration = (self.__acceleration_c - (f * np.linalg.norm(self.__velocity) * np.cos(self.__orientation - theta_v)))
+            vel = self.__acceleration + np.linalg.norm(self.__velocity) 
             
-            #logger.debug("Kart number %i: vel: %s ; orientation: %s ; theta_v: %s", self.id, vel, self.orientation, theta_v)
+            #logger.debug("Kart number %i: vel: %s ; orientation: %s ; theta_v: %s", self.__id, vel, self.__orientation, theta_v)
 
             if (not boosting):
-                self.velocity = np.array([round((vel * np.cos(self.orientation)),4), round((vel*np.sin(self.orientation)),4)])
+                self.__velocity = np.array([round((vel * np.cos(self.__orientation)),4), round((vel*np.sin(self.__orientation)),4)])
             else:
-                self.velocity = np.array([round(25 * np.cos(self.orientation),4), round(25*np.sin(self.orientation),4)])
+                self.__velocity = np.array([round(25 * np.cos(self.__orientation),4), round(25*np.sin(self.__orientation),4)])
             
 
             if TEXT:
-                status_checkpoint_str = "Checkpoint: " + str(self.checkpoint)
+                status_checkpoint_str = "Checkpoint: " + str(self.__checkpoint)
                 font = pygame.font.SysFont(None, size=36)  # You can adjust the size as needed
                 text = font.render(status_checkpoint_str, True, (0,0,0))
                 text_rect = text.get_rect()
@@ -251,54 +265,54 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
                 font = pygame.font.SysFont(None, size=60)  # You can adjust the size as needed
-                if (((time.time_ns() - self.start_time)*1e-9)> self.best_time) : 
+                if (((time.time_ns() - self.__start_time)*1e-9)> self.__best_time) : 
                     color = (255, 30, 30)
                 else:
                     color = (0, 0, 0)
                     
-                text = font.render(("%0.2f s" % ((time.time_ns() - self.start_time)*1e-9)), True, color)
+                text = font.render(("%0.2f s" % ((time.time_ns() - self.__start_time)*1e-9)), True, color)
                 text_rect = text.get_rect()
-                text_rect.center = (self.screen_size[0]//2, self.screen_size[1]//2)  # Adjust the position as needed
+                text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2)  # Adjust the position as needed
                 screen.blit(text, text_rect)
 
                 font = pygame.font.SysFont(None, size=40)  # You can adjust the size as needed
-                text = font.render(("Best time: %0.2f s" % self.best_time), True, (0,0,0))
+                text = font.render(("Best time: %0.2f s" % self.__best_time), True, (0,0,0))
                 text_rect = text.get_rect()
-                text_rect.center = (self.screen_size[0]//2, self.screen_size[1]//2+100)  # Adjust the position as needed
+                text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2+100)  # Adjust the position as needed
                 screen.blit(text, text_rect)
 
-            #logger.debug("Kart number %i: accel: %s ; velocity(norm): %s ; velocity : %s ", self.id, self.acceleration, np.linalg.norm(self.velocity), self.velocity)
+            #logger.debug("Kart number %i: accel: %s ; velocity(norm): %s ; velocity : %s ", self.__id, self.__acceleration, np.linalg.norm(self.__velocity), self.__velocity)
 
-            self.position = self.position.astype(float)
+            self.__position = self.__position.astype(float)
 
             #Bound the position to the screen. Account for the position being the top left of the rectangle. Adapt if switching from rec to pic maybe.
-            if (self.position[0] + self.velocity[0]>0. and self.position[0] + self.velocity[0] < self.screen_size[0]-20.):
-                self.position[0] += self.velocity[0]
+            if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]-20.):
+                self.__position[0] += self.__velocity[0]
             else:
-                self.reset(self.checkpoint_pos, self.checkpoint_orient, self.checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
                 return
-            if (self.position[1] + self.velocity[1]>1 and self.position[1] + self.velocity[1] < self.screen_size[1]-20):
-                self.position[1] = self.position[1] + self.velocity[1]
+            if (self.__position[1] + self.__velocity[1]>1 and self.__position[1] + self.__velocity[1] < Kart.__screen_size[1]-20):
+                self.__position[1] = self.__position[1] + self.__velocity[1]
             else:
-                self.reset(self.checkpoint_pos, self.checkpoint_orient, self.checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
                 return
             
             
-            self.acceleration_c = 0
+            self.__acceleration_c = 0
         pass
     
     def draw(self, screen):
-        kart_position = np.copy(self.position)
+        kart_position = np.copy(self.__position)
         kart_radius = 20
 
 
 
 
         #IF NONE OF THE TEXTURES HAVE BEEN LOADED, LOAD THEM:
-        if (not self.initialized):
+        if (not self.__initialized):
             scale = 0.05
 
-            Kart.splash_screen = pygame.image.load("textures/splash_screen.jpg").convert()
+            Kart.__splash_screen = pygame.image.load("textures/splash_screen.jpg").convert()
 
 
 
@@ -337,36 +351,36 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             Kart.textures = np.array([Kart.texture_top, Kart.texture_left, Kart.texture_right, Kart.texture_top])
 
 
-            self.initialized = True
-            Kart.started = game.splash_screen(screen,Kart.splash_screen, Kart.started)
-            self.start_time = time.time_ns()
+            self.__initialized = True
+            Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+            self.__start_time = time.time_ns()
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
-        # quadr = Common.quadrant(float(self.orientation))
+        # quadr = Common.quadrant(float(self.__orientation))
         vel_scale = 0 
 
-        if (np.linalg.norm(self.velocity)>2 and np.linalg.norm(self.velocity)<5):
+        if (np.linalg.norm(self.__velocity)>2 and np.linalg.norm(self.__velocity)<5):
             vel_scale = 1
-        elif (np.linalg.norm(self.velocity)>=5):
+        elif (np.linalg.norm(self.__velocity)>=5):
             vel_scale = 2
 
         output_texture = Kart.textures[self.__input-1][vel_scale]
-        output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.orientation))
+        output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.__orientation))
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
-        Vel_dir = self.velocity / (max(np.abs(self.velocity)) +1e-3)
+        Vel_dir = self.__velocity / (max(np.abs(self.__velocity)) +1e-3)
 
-        Ratio = max(min(np.linalg.norm(self.velocity)*20, 230), 45)
+        Ratio = max(min(np.linalg.norm(self.__velocity)*20, 230), 45)
 
         future_x = int(Ratio*Vel_dir[0])
         future_y = int(Ratio*Vel_dir[1])
 
 
         k = 0.5
-        angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.velocity)))
+        angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
         vec_scale = 1/1
 
-        if np.linalg.norm(self.velocity) < 2:
+        if np.linalg.norm(self.__velocity) < 2:
                 angle = 1.2 
 
         skew = (0.,0.)
@@ -386,9 +400,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
         neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
 
-        pygame.draw.circle(screen, (255, 255, 255), [future_x+self.position[0],future_y+self.position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.position[0],pos_rotated_velocity_vector_y+self.position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.position[0],neg_rotated_velocity_vector_y+self.position[1]], 2.0)
+        pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
+        pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
+        pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
 
 
 
@@ -398,10 +412,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     def check_radar_speed(self,delta):
         braking = False
         radar_readings = []
-        range_points = 10*int(np.linalg.norm(self.velocity))
-        if abs(delta) < 0.2 and (np.linalg.norm(self.velocity) < 13.):
+        range_points = 10*int(np.linalg.norm(self.__velocity))
+        if abs(delta) < 0.2 and (np.linalg.norm(self.__velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.velocity) >= 15.:
+        elif np.linalg.norm(self.__velocity) >= 15.:
             braking = True
             return braking
         elif abs(delta) > 1.2:
@@ -410,13 +424,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         else:
             for i in range(1, range_points + 2):
                 # Calculate the position of the point in front of the kart
-                x_check = int(self.position[0] + i * np.cos(self.orientation))
-                y_check = int(self.position[1] + i * np.sin(self.orientation))
+                x_check = int(self.__position[0] + i * np.cos(self.__orientation))
+                y_check = int(self.__position[1] + i * np.sin(self.__orientation))
 
                 # Check if the calculated position is within the map boundaries
-                if 0 <= x_check < self.char_map.shape[0] and 0 <= y_check < self.char_map.shape[1]:
+                if 0 <= x_check < self.__char_map.shape[0] and 0 <= y_check < self.__char_map.shape[1]:
                     # Read the value at the calculated position
-                    block_value = self.char_map[x_check, y_check]
+                    block_value = self.__char_map[x_check, y_check]
                     radar_readings.append(block_value)
                 else:
                     # If the position is outside the map, consider it as a wall
@@ -431,7 +445,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
     def read_map(self):
         boosting = False
-        X = np.array(self.position, dtype=np.int16)
+        X = np.array(self.__position, dtype=np.int16)
         point = self.map[X[0]][X[1]]
 
         if point >= 101 and point <=104:
@@ -461,12 +475,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         px = float(p[0])
         py = float(p[1])
 
-        obj_vec = np.array([px - self.position[0], py - self.position[1]]) #Kart to object
-        #angle_to_lava = np.arccos(np.dot(self.velocity, obj_vec)/ (np.linalg.norm(self.velocity) * np.linalg.norm(obj_vec)))
+        obj_vec = np.array([px - self.__position[0], py - self.__position[1]]) #Kart to object
+        #angle_to_lava = np.arccos(np.dot(self.__velocity, obj_vec)/ (np.linalg.norm(self.__velocity) * np.linalg.norm(obj_vec)))
         
 
         #We now compute the Kart to object vector in the Kart frame
-        obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.orientation) - obj_vec[1]*np.sin(-1*self.orientation), obj_vec[0]*np.sin(-1*self.orientation) + obj_vec[1] * np.cos(-1*self.orientation)])
+        obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.__orientation) - obj_vec[1]*np.sin(-1*self.__orientation), obj_vec[0]*np.sin(-1*self.__orientation) + obj_vec[1] * np.cos(-1*self.__orientation)])
         
         #Ellipse equation 
         #obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1
@@ -481,26 +495,26 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
     def update_pos_AI(self):
         _, boosting,f = self.read_map()
-        theta_v = math.atan2(self.velocity[1], self.velocity[0])
-        self.acceleration = self.acceleration_c - (f * np.linalg.norm(self.velocity) * np.cos(self.orientation - theta_v))
-        vel = self.acceleration + np.linalg.norm(self.velocity) 
+        theta_v = math.atan2(self.__velocity[1], self.__velocity[0])
+        self.__acceleration = self.__acceleration_c - (f * np.linalg.norm(self.__velocity) * np.cos(self.__orientation - theta_v))
+        vel = self.__acceleration + np.linalg.norm(self.__velocity) 
         
         if (not boosting):
-                self.velocity = (vel * np.cos(self.orientation), vel*np.sin(self.orientation))
+                self.__velocity = (vel * np.cos(self.__orientation), vel*np.sin(self.__orientation))
         else:
-                self.velocity = (BOOST_SPEED * np.cos(self.orientation), BOOST_SPEED*np.sin(self.orientation))
+                self.__velocity = (BOOST_SPEED * np.cos(self.__orientation), BOOST_SPEED*np.sin(self.__orientation))
                         
-        if (self.position[0] + self.velocity[0]>0. and self.position[0] + self.velocity[0] < np.shape(self.char_map)[0]):
-                self.position[0] += self.velocity[0]
+        if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < np.shape(self.__char_map)[0]):
+                self.__position[0] += self.__velocity[0]
         else:
             pass
         
-        if (self.position[1] + self.velocity[1]>0 and self.position[1] + self.velocity[1] < np.shape(self.char_map)[1]-20):
-            self.position[1] = self.position[1] + self.velocity[1]
+        if (self.__position[1] + self.__velocity[1]>0 and self.__position[1] + self.__velocity[1] < np.shape(self.__char_map)[1]-20):
+            self.__position[1] = self.__position[1] + self.__velocity[1]
         else:
             pass
 
-        logger.debug("MAP SIZE: %s", np.shape(self.char_map))
+        logger.debug("MAP SIZE: %s", np.shape(self.__char_map))
 
-        self.acceleration_c = 0       
+        self.__acceleration_c = 0       
         pass
