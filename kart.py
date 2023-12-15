@@ -258,7 +258,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.__velocity = np.array([round(25 * np.cos(self.__orientation),4), round(25*np.sin(self.__orientation),4)])
             
 
-            if TEXT:
+            if TEXT and not self.__controller.is_ai:
                 status_checkpoint_str = "Checkpoint: " + str(self.__checkpoint)
                 font = pygame.font.SysFont(None, size=36)  # You can adjust the size as needed
                 text = font.render(status_checkpoint_str, True, (0,0,0))
