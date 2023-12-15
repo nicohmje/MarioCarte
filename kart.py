@@ -13,7 +13,12 @@ import logging
 
 
 
-# ROAD MAP: ADD TRAIL (and boosting effect) || FIX AI AND HUMAN
+#This is the Kart class.
+#It includes the necessary functions to make an AI or Human powered Kart work. It also includes some texture loading for the Kart's sprite.
+
+
+
+
 
 from common import Common
 
@@ -24,7 +29,6 @@ BOOST_SPEED = 25.
 TEXT = True
 
 logger = logging.getLogger('MariooCarteLogger')
-
 
 
 class Kart():  # Vous pouvez ajouter des classes parentes
@@ -177,9 +181,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         if Kart.__started:
             boosting = False    
 
-            self.__orientation = Common.RadiansLim(self.__orientation)
 
-            self.next_checkpoint_id = self.__checkpoint + 1
+            self.__orientation = Common.RadiansLim(self.__orientation)
 
             theta_v = math.atan2(self.__velocity[1], self.__velocity[0])
 
@@ -284,6 +287,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             #logger.debug("Kart number %i: accel: %s ; velocity(norm): %s ; velocity : %s ", self.__id, self.__acceleration, np.linalg.norm(self.__velocity), self.__velocity)
 
             self.__position = self.__position.astype(float)
+            
+
 
             #Bound the position to the screen. Account for the position being the top left of the rectangle. Adapt if switching from rec to pic maybe.
             if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]-20.):
@@ -296,6 +301,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             else:
                 self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
                 return
+            
             
             
             self.__acceleration_c = 0
@@ -352,7 +358,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
             self.__initialized = True
-            Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+            if self.__id == 1:
+                Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
             self.__start_time = time.time_ns()
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
@@ -407,7 +414,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
         self.__input = 0 
-
 
     def check_radar_speed(self,delta):
         braking = False

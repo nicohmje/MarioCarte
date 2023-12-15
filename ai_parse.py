@@ -12,6 +12,11 @@ import logging
 
 logger = logging.getLogger('MariooCarteLogger')
 
+
+#This is to determine the commands the AI should execute to finish the track.
+#Note that the MAPPING.PY file includes the initial A* path finding.
+#This file then determines the commmands to try and follow the path.
+
 class AI_PARSE():  
 
     

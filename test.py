@@ -19,6 +19,7 @@ class SequencePlayer():
     """
     Classe qui sert a jouer une sequence de mouvements predefinis
     """
+    step = 0
     def __init__(self, sequence):
         self.sequence = sequence
         self.time = 0

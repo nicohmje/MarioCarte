@@ -5,6 +5,10 @@ import logging
 
 logger = logging.getLogger('MariooCarteLogger')
 
+
+#Class for the grass block
+#It also handles the texture loading and track texture saving & displaying.
+
 class Grass():  
 
     __surface_type = 0.2

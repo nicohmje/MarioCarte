@@ -7,6 +7,9 @@ import time
 logger = logging.getLogger('MariooCarteLogger')
 
 
+#This is the class that does the A* pathfinding for the AI
+
+
 def heuristic(a, b):
     return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
 

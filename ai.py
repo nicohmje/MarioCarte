@@ -7,6 +7,8 @@ BLOCK_SIZE = 50
 
 logger = logging.getLogger('MariooCarteLogger')
 
+#Just a general AI class that delegates all the work to AI_PARSE
+
 class AI():
     
     def __init__(self, string, pos_ini, angle_ini):
@@ -35,7 +37,7 @@ class AI():
         self.__step = step
 
     def move(self, string):
-        time.sleep(0.01)
+        time.sleep(0.005)
         logger.debug("Step %i", self.__step)
         keys = self.__ai.move(self.__step)
         self.__step+=1

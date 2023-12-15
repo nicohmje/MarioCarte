@@ -2,6 +2,9 @@ import track
 import pygame
 from grass import Grass
 
+#Class for the boost block
+
+
 class Boost():  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
     __color = (149, 40, 143)

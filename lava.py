@@ -2,6 +2,9 @@ import pygame
 from grass import Grass 
 import track
 
+
+#Class for the lava block
+
 class Lava():  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
     __color = (159, 45, 32)

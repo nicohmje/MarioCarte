@@ -5,6 +5,9 @@ import logging
 
 logger = logging.getLogger('MariooCarteLogger')
 
+#This is to display the home screen in a blocking manner 
+
+
 def splash_screen(screen, texture, started):
     logger.info("Started")
     dimensions = screen.get_size()
