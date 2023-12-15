@@ -4,9 +4,12 @@ import pygame
 class Human():
     
     def __init__(self):
-        self.kart = None
+        self.__kart = None
         self.is_ai = False
-        self.step = 0
+
+    @property 
+    def kart(self):
+        return self.__kart
         
     def move(self, string):
         time.sleep(0.01)

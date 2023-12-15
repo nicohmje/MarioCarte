@@ -24,24 +24,24 @@ class AI_PARSE():
 
         AI_PARSE.need_to_map = False
         try:
-            track_string_file = np.load('track_string.npy')
+            track_string_file = np.load('ai_files/track_string.npy')
             logger.info("LOADED STRING")
             if (track_string_file == track_string):
                 logger.info('TRACK STRING HAS NOT CHANGED')
                 try:   
-                    self.command = np.load("ai_commands.npy")
+                    self.command = np.load("ai_files/ai_commands.npy")
                     logger.info("LOADED COMMANDS")
                 except:
                     logger.info("AI COMMANDS NOT FOUND")
                     AI_PARSE.need_to_map = True                    
             else: 
                 logger.info('TRACK STRING HAS CHANGED')
-                os.remove("ai_commands.npy")
-                os.remove("track_string.npy")
-                np.save('track_string.npy', np.array(self.track_string))
+                os.remove("ai_files/ai_commands.npy")
+                os.remove("ai_files/track_string.npy")
+                np.save('ai_files/track_string.npy', np.array(self.track_string))
                 AI_PARSE.need_to_map = True
         except:
-            np.save('track_string.npy', np.array(self.track_string))
+            np.save('ai_files/track_string.npy', np.array(self.track_string))
             track_string_file = str("john")
             AI_PARSE.need_to_map = True
             
@@ -56,11 +56,11 @@ class AI_PARSE():
         if (AI_PARSE.need_to_map):
             logger.info("STARTED MAPPING")
             if (track_string_file == track_string):
-                if os.path.isfile("track.npy") and os.path.isfile("path.txt"):
-                    AI_PARSE.track = np.load("track.npy")
+                if os.path.isfile("ai_files/track.npy") and os.path.isfile("ai_files/path.txt"):
+                    AI_PARSE.track = np.load("ai_files/track.npy")
                     logger.info("Loaded previous track")
                     AI_PARSE.path = []
-                    with open(r'path.txt', 'r') as fp:
+                    with open(r'ai_files/path.txt', 'r') as fp:
                         for line in fp:
                             x = line
                             AI_PARSE.path.append(eval(x))
@@ -70,20 +70,20 @@ class AI_PARSE():
                 else:
                     logger.info("STARTED TRACK PARSING (this may take a while, don't panic if it looks stuck)")
                     AI_PARSE.track, AI_PARSE.path = mapping(track_string, self.pos_ini)
-                    np.save("track.npy", AI_PARSE.track)
-                    with open(r'path.txt', 'w') as fp:
+                    np.save("ai_files/track.npy", AI_PARSE.track)
+                    with open(r'ai_files/path.txt', 'w') as fp:
                         fp.write("\n".join(str(item) for item in AI_PARSE.path))
                     fp.close()
             else:
                 logger.info("TRACK STRING HAS CHANGED")
                 logger.info("STARTED TRACK PARSING (this may take a while, don't panic if it looks stuck)")
-                if (os.path.exists("track.npy")):  
-                    os.remove("track.npy")
-                if (os.path.exists("path.txt")):
-                    os.remove("path.txt")
+                if (os.path.exists("ai_files/track.npy")):  
+                    os.remove("ai_files/track.npy")
+                if (os.path.exists("ai_files/path.txt")):
+                    os.remove("ai_files/path.txt")
                 AI_PARSE.track, AI_PARSE.path = mapping(track_string, self.pos_ini)
-                np.save("track.npy", AI_PARSE.track)
-                with open(r'path.txt', 'w') as fp:
+                np.save("ai_files/track.npy", AI_PARSE.track)
+                with open(r'ai_files/path.txt', 'w') as fp:
                         fp.write("\n".join(str(item) for item in AI_PARSE.path))
                 fp.close()   
             # logger.debug("NP SHAPE PATH")
@@ -376,7 +376,7 @@ class AI_PARSE():
             
             step +=1
         
-        np.save('ai_commands.npy', np.array(self.command))
+        np.save('ai_files/ai_commands.npy', np.array(self.command))
         AI_PARSE.need_to_map = False
 
     def move(self,step):

@@ -1,17 +1,11 @@
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
+from track import BLOCK_SIZE
 import time
 
 
 logger = logging.getLogger('MariooCarteLogger')
 
-# ###Defining usefull fonctions :
-# def fenetre(position,track):
-#     x = position[0]
-#     y = position[1]
-#     fenetre = track[x:x+3, y:y+3]
-#     return fenetre
 
 def heuristic(a, b):
     return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
@@ -79,36 +73,30 @@ def astar(array, start, goal, block_costs):
     return None
 
 def mapping(track_string,ini_pos):
-    ###Global Map*£¨%MP
-    # Create a dictionary to map characters to values
-    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
 
-    # Split the track string into lines and create a list of lists
+    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
     track_lines = track_string.split('\n')
     track_array = [[char_mapping[char] for char in line] for line in track_lines]
 
     # Convert the list of lists to a NumPy array
     track_array = np.array(track_array, dtype=np.uint8)
 
-    ###Finding the apexes:
-    # Create a dictionary to map characters to values
     char_mapping_apex = {'R': 255, 'G': 0, 'C':255, 'D':255, 'B':255, 'E':255, 'F':255, 'L':0}
 
     # Split the track string into lines and create a list of lists
-    #track_lines = track_string.split('\n')
     track_apex = [[char_mapping_apex[char] for char in line] for line in track_lines]
 
     # Convert the list of lists to a NumPy array
     track_apex = np.array(track_apex, dtype=np.uint8)
 
 
-    ###Defining the corners:
+    #Defining the corners:
     Corner_1 = np.array([[255,255,255],[0,0,255],[0,0,255]])
     Corner_2 = np.array([[255,255,255],[255,0,0],[255,0,0]])
     Corner_3 = np.array([[0,0,255],[0,0,255],[255,255,255]])
     Corner_4 = np.array([[255,0,0],[255,0,0],[255,255,255]])
 
-    ###Searching for corners:
+    #Searching for corners:
     height = track_apex.shape[0]
     width = track_apex.shape[1]
     corners_coord = []
@@ -124,17 +112,17 @@ def mapping(track_string,ini_pos):
                 corners_coord.append([w+2,h])
                 corners_coord.append([w+3,h+1])
                 corners_type.append(1)
-            if np.all(F == Corner_2):
+            elif np.all(F == Corner_2):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h])
                 corners_coord.append([w+1,h-1])
                 corners_type.append(2)
-            if np.all(F == Corner_3):
+            elif np.all(F == Corner_3):
                 corners_coord.append([w+3,h+1])
                 corners_coord.append([w+2,h+2])
                 corners_coord.append([w+1,h+3])
                 corners_type.append(3)
-            if np.all(F == Corner_4):
+            elif np.all(F == Corner_4):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h+2])
                 corners_coord.append([w+1,h+3])
@@ -147,11 +135,10 @@ def mapping(track_string,ini_pos):
         track_final[corner[1]][corner[0]] = 10
 
     ###Augmenting the scale
-    useable_track = np.repeat(np.repeat(track_final,50,axis=0),50,axis=1)
+    useable_track = np.repeat(np.repeat(track_final,BLOCK_SIZE,axis=0),BLOCK_SIZE,axis=1)
 
 
     #### A*
-
 
     # Start and goal positions
     start = (int(ini_pos[0]),int(ini_pos[1]))
@@ -165,10 +152,10 @@ def mapping(track_string,ini_pos):
     cp=np.array([[0.,0.],[0.,0.],[0.,0.],[0.,0.],[0.,0.]])
 
     cp[0] = start
-    cp[1] = (np.mean(cp1_pos[:,0])*50 + 50/2., np.mean(cp1_pos[:,1])*50 + 50/2.)
-    cp[2] = (np.mean(cp2_pos[:,0])*50 + 50/2., np.mean(cp2_pos[:,1])*50 + 50/2.)
-    cp[3] = (np.mean(cp3_pos[:,0])*50 + 50/2., np.mean(cp3_pos[:,1])*50 + 50/2.)
-    cp[4] = (np.mean(cp4_pos[:,0])*50 + 50/2., np.mean(cp4_pos[:,1])*50 + 50/2.)
+    cp[1] = (np.mean(cp1_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp1_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[2] = (np.mean(cp2_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp2_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[3] = (np.mean(cp3_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp3_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[4] = (np.mean(cp4_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp4_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
 
     nbr_cp = (int(not np.any(np.isnan(cp[1]))) + int(not np.any(np.isnan(cp[2])))+ int(not np.any(np.isnan(cp[3])))+ int(not np.any(np.isnan(cp[4]))))
 
@@ -199,38 +186,31 @@ def mapping(track_string,ini_pos):
 
     # logger.debug("TRACK TRAJ %s", track_traj)
 
-    track_passed = np.repeat(np.repeat(track_traj,50,axis=0),50,axis=1)
+    track_passed = np.repeat(np.repeat(track_traj,BLOCK_SIZE,axis=0),BLOCK_SIZE,axis=1)
 
     logger.debug("TRACK PASSED SIZE %s", np.shape(track_passed))
 
     ###Creating intermediate points to increase the learning
-    #p = path.copy()
+
 
     p = []
     x_ini = path[0]
     p.append(x_ini)
     cp = 101
-    old_arr = np.array([0.0,0.0])
     for x in path:
         arr = np.array([x[0]-x_ini[0], x[1]-x_ini[1]])
-        angle_between_points = np.arccos(np.dot(arr, old_arr)/ (np.linalg.norm(arr)*np.linalg.norm(old_arr)))
         if (np.linalg.norm(arr)>100.):
             p.append(x)
             x_ini = x      
-        # elif angle_between_points > 0.5:
-        #     p.append(x)
-        #     logger.info("DISTANCE TOO BIG %s", angle_between_points)
-        #     x_ini = x
         elif (track_passed[x[0]][x[1]] == cp):
             p.append(x)
             x_ini = x 
             cp += 1
-        old_arr = arr
 
 
     finish_positions = np.argwhere(track_array == 104)
 
-    finish_positions = finish_positions*50 + (25,25)
+    finish_positions = finish_positions*BLOCK_SIZE + (25,25)
 
 
     logger.debug("Positions of the finish line:")

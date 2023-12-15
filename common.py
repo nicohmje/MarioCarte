@@ -1,7 +1,5 @@
 #pragma once
 
-import numpy as np
-
 class Common():
 
 

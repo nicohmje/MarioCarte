@@ -32,7 +32,11 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     Classe implementant l'affichage et la physique du kart dans le jeu
     """
 
-    nbr_of_karts = 0
+    __nbr_of_karts = 0
+
+    @classmethod
+    def nbr_of_karts_(cls):
+        return cls.__nbr_of_karts
 
     kart_texture_top = None
     kart_texture_side = None
@@ -87,7 +91,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         if self.initialized:
             self.controller.reset(step)
             # time.sleep(4)
-
         pass
         
     def forward(self):
@@ -174,10 +177,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
             if string_letter == ord('G') and not self.music_playing:
                 pygame.mixer.music.play(-1)
-                f = Grass.surface_type
+                f = Grass.surface_type_()
                 self.music_playing = True
             elif string_letter == ord('G') and self.music_playing:
-                f = Grass.surface_type
+                f = Grass.surface_type_()
 
             if not string_letter == ord('G') and self.music_playing :
                 #logger.debug("Kart number %i: stop grass sound")
@@ -187,19 +190,19 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             match string_letter:
                 case 66: #ASCII FOR B
                     pygame.mixer.Sound.play(Boost.sound)
-                    f = Boost.surface_type
+                    f = Boost.surface_type_()
                     boosting = True
 
                 case 82: #ASCII FOR R
-                    f = Road.surface_type
+                    f = Road.surface_type_()
 
                 case 76: #ASCII FOR L
                     pygame.mixer.Sound.play(Lava.sound)
-                    f = Checkpoint.surface_type
+                    f = Checkpoint.surface_type_()
                     self.reset(np.array(self.checkpoint_pos), self.checkpoint_orient, self.checkpoint_step)
 
                 case 67|68|69|70:
-                    f = Checkpoint.surface_type
+                    f = Checkpoint.surface_type_()
                     cur_checkpoint = (string_letter - ord('C')) + 1
                     if cur_checkpoint > self.checkpoint + 1:
                         pass
@@ -432,19 +435,19 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         point = self.map[X[0]][X[1]]
 
         if point >= 101 and point <=104:
-            f = Checkpoint.surface_type
+            f = Checkpoint.surface_type_()
             return 'ap',boosting, f 
 
         match point:
             case  0:
-                f = Grass.surface_type
+                f = Grass.surface_type_()
                 return 'ap',boosting, f
             case 200:
                 boosting = True
-                f = Boost.surface_type
+                f = Boost.surface_type_()
                 return 'ap',boosting, f
             case _:
-                f = Road.surface_type
+                f = Road.surface_type_()
                 return 'a',boosting, f
         
     def radar_points(self):

@@ -5,7 +5,7 @@ import numpy as np
 ### This very rudimentary tool transcribes an image into the corresponding string.
 ### Needs some love, is very very very basic.
 
-track_image = Image.open('track_4.png')
+track_image = Image.open('track_creator.png')
 
 track_image_arr = np.array(track_image)
 image64 = track_image_arr.astype(np.float64)
