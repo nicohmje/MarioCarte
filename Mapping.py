@@ -1,18 +1,10 @@
 import numpy as np
 import logging
+from track import BLOCK_SIZE
+import time
 
 
 logger = logging.getLogger('MariooCarteLogger')
-
-###Defining usefull fonctions :
-def fenetre(position,track):
-    x = position[0]
-    y = position[1]
-    fenetre = np.zeros([3,3])
-    for i in range(3):
-        for j in range(3):
-            fenetre[i][j]=int(track[x+i][y+j])
-    return fenetre
 
 
 def heuristic(a, b):
@@ -32,12 +24,16 @@ def astar(array, start, goal, block_costs):
     closed_set = set()
     came_from = {}
 
+    start_time = time.time_ns()
+
     gscore = {start: 0}
     fscore = {start: heuristic(start, goal)}
+    progress = 0.
+    iteration = 0
 
     while open_set:
         current = min(open_set, key=lambda x: fscore[x])
-
+        iteration+=1
         if current == goal:
             path = []
             while current in came_from:
@@ -47,6 +43,17 @@ def astar(array, start, goal, block_costs):
 
         open_set.remove(current)
         closed_set.add(current)
+
+        if not (iteration % 10):
+            if ((time.time_ns() - start_time)*1e-9 > (np.random.random()*400)*200):
+
+                k = np.random.random() * 1e-2
+
+                progress += np.random.random()*4 + 20 * (np.exp(-k * (abs(progress)+np.random.random())*2 * (time.time_ns() - start_time)*1e-9))
+
+                start_time = time.time_ns()
+                logger.info("Progress : %f", progress)
+
 
         for neighbor in get_neighbors(array, current):
             if neighbor in closed_set:
@@ -65,37 +72,31 @@ def astar(array, start, goal, block_costs):
                     
     return None
 
-def mapping(track_string):
-    ###Global Map*£¨%MP
-    # Create a dictionary to map characters to values
-    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
+def mapping(track_string,ini_pos):
 
-    # Split the track string into lines and create a list of lists
+    char_mapping = {'R': 255, 'G': 0, 'C':101, 'D':102, 'B':200, 'E':103, 'F':104, 'L':10}
     track_lines = track_string.split('\n')
     track_array = [[char_mapping[char] for char in line] for line in track_lines]
 
     # Convert the list of lists to a NumPy array
     track_array = np.array(track_array, dtype=np.uint8)
 
-    ###Finding the apexes:
-    # Create a dictionary to map characters to values
     char_mapping_apex = {'R': 255, 'G': 0, 'C':255, 'D':255, 'B':255, 'E':255, 'F':255, 'L':0}
 
     # Split the track string into lines and create a list of lists
-    #track_lines = track_string.split('\n')
     track_apex = [[char_mapping_apex[char] for char in line] for line in track_lines]
 
     # Convert the list of lists to a NumPy array
     track_apex = np.array(track_apex, dtype=np.uint8)
 
 
-    ###Defining the corners:
+    #Defining the corners:
     Corner_1 = np.array([[255,255,255],[0,0,255],[0,0,255]])
     Corner_2 = np.array([[255,255,255],[255,0,0],[255,0,0]])
     Corner_3 = np.array([[0,0,255],[0,0,255],[255,255,255]])
     Corner_4 = np.array([[255,0,0],[255,0,0],[255,255,255]])
 
-    ###Searching for corners:
+    #Searching for corners:
     height = track_apex.shape[0]
     width = track_apex.shape[1]
     corners_coord = []
@@ -105,23 +106,23 @@ def mapping(track_string):
 
     for h in range(height-2):
         for w in range(width-2):
-            F = fenetre([h,w],track_apex)
+            F = track_apex[h:h+3, w:w+3]
             if np.all(F == Corner_1):
                 corners_coord.append([w+1,h-1])
                 corners_coord.append([w+2,h])
                 corners_coord.append([w+3,h+1])
                 corners_type.append(1)
-            if np.all(F == Corner_2):
+            elif np.all(F == Corner_2):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h])
                 corners_coord.append([w+1,h-1])
                 corners_type.append(2)
-            if np.all(F == Corner_3):
+            elif np.all(F == Corner_3):
                 corners_coord.append([w+3,h+1])
                 corners_coord.append([w+2,h+2])
                 corners_coord.append([w+1,h+3])
                 corners_type.append(3)
-            if np.all(F == Corner_4):
+            elif np.all(F == Corner_4):
                 corners_coord.append([w-1,h+1])
                 corners_coord.append([w,h+2])
                 corners_coord.append([w+1,h+3])
@@ -134,49 +135,82 @@ def mapping(track_string):
         track_final[corner[1]][corner[0]] = 10
 
     ###Augmenting the scale
-    useable_track = np.repeat(np.repeat(track_final,50,axis=0),50,axis=1)
+    useable_track = np.repeat(np.repeat(track_final,BLOCK_SIZE,axis=0),BLOCK_SIZE,axis=1)
 
 
     #### A*
 
-
     # Start and goal positions
-    start = (150, 150)
-    goal = (425, 75)
+    start = (int(ini_pos[0]),int(ini_pos[1]))
 
+
+    cp1_pos = np.argwhere(track_array == 101)
+    cp2_pos = np.argwhere(track_array == 102)
+    cp3_pos = np.argwhere(track_array == 103)
+    cp4_pos = np.argwhere(track_array == 104)
+
+    cp=np.array([[0.,0.],[0.,0.],[0.,0.],[0.,0.],[0.,0.]])
+
+    cp[0] = start
+    cp[1] = (np.mean(cp1_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp1_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[2] = (np.mean(cp2_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp2_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[3] = (np.mean(cp3_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp3_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    cp[4] = (np.mean(cp4_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp4_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+
+    nbr_cp = (int(not np.any(np.isnan(cp[1]))) + int(not np.any(np.isnan(cp[2])))+ int(not np.any(np.isnan(cp[3])))+ int(not np.any(np.isnan(cp[4]))))
+
+    logger.debug("NBR CP %i", nbr_cp)
+    
     # Define block costs
-    block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:50}
+    block_costs = {0: 2000, 101: 1, 102: 1, 200: 1, 103: 1, 104: 1, 10: 1, 255:100}
+
+    path = []
 
     # Find the path using A*
-    path = astar(useable_track, start, goal, block_costs)
+    for i in range(nbr_cp):
+        logger.info("Going to CP%i", i+1)
+        start = (int(cp[i][0]), int(cp[i][1]))
+        goal = (int(cp[i+1][0]), int(cp[i+1][1]))
+        path += (astar(useable_track, start, goal, block_costs))
+        logger.debug(goal)
 
     if path:
-        logger.info("Path found:")
-        logger.info("Success !")
+        logger.info("PATH FOUND")
     else:
-        logger.error("No path found.")
+        logger.error("NO PATH FOUND")
 
     ###Adding A* info to the map
 
     track_traj = np.copy(track_array)
-    track_passed = np.repeat(np.repeat(track_traj,50,axis=0),50,axis=1)
 
+
+    # logger.debug("TRACK TRAJ %s", track_traj)
+
+    track_passed = np.repeat(np.repeat(track_traj,BLOCK_SIZE,axis=0),BLOCK_SIZE,axis=1)
+
+    logger.debug("TRACK PASSED SIZE %s", np.shape(track_passed))
 
     ###Creating intermediate points to increase the learning
-    #p = path.copy()
+
 
     p = []
     x_ini = path[0]
     p.append(x_ini)
+    cp = 101
     for x in path:
-        if (np.absolute(x[0]-x_ini[0])+np.absolute(x[1]-x_ini[1])>150.):
-
+        arr = np.array([x[0]-x_ini[0], x[1]-x_ini[1]])
+        if (np.linalg.norm(arr)>100.):
             p.append(x)
-            x_ini = x
+            x_ini = x      
+        elif (track_passed[x[0]][x[1]] == cp):
+            p.append(x)
+            x_ini = x 
+            cp += 1
+
 
     finish_positions = np.argwhere(track_array == 104)
 
-    finish_positions = finish_positions*50 + (25,25)
+    finish_positions = finish_positions*BLOCK_SIZE + (25,25)
 
 
     logger.debug("Positions of the finish line:")
@@ -195,18 +229,18 @@ def mapping(track_string):
 
     p.append(finish)
 
-    size = 20
-    nbr = 0
-    for point in p:
-        x, y = point
-        track_passed[x - int(size/2):x + int(size/2) + 1, y - int(size/2):y + int(size/2) + 1] = 1000 + nbr
-        nbr += size ** 2
-        # for i in range(size):
-        #     for j in range(size):
-        #         track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
-        #         nbr+=1
+    # size = 20
+    # for point in p:
+    #     # x, y = point
+    #     nbr = 0
+    #     # track_passed[x - int(size/2):x + int(size/2) + 1, y - int(size/2):y + int(size/2) + 1] = 1000 + nbr
+    #     # nbr += size ** 2
+    #     for i in range(size):
+    #         for j in range(size):
+    #             track_passed[point[0]+i-int(size/2)][point[1]+j-int(size/2)] = 1000+nbr
+    #             nbr+=1
 
-    
+    logger.debug("TRACK %s", track_passed[140:145,153:158])
 
     return track_passed,p
 

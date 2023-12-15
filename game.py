@@ -1,7 +1,5 @@
 import pygame
 import time
-import numpy as np 
-from grass import Grass
 import logging
 
 

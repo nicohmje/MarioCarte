@@ -1,5 +1,5 @@
 import time
-from radar import AI_PARSE
+from ai_parse import AI_PARSE
 import logging
 
 MAX_ANGLE_VELOCITY = 0.05
@@ -10,19 +10,34 @@ logger = logging.getLogger('MariooCarteLogger')
 class AI():
     
     def __init__(self, string, pos_ini, angle_ini):
-        self.kart = None
+        self.__kart = None
         self.is_ai = True
-        self.ai = AI_PARSE(string,pos_ini, angle_ini)
+        self.__ai = AI_PARSE(string,pos_ini, angle_ini)
         if (AI_PARSE.need_to_map):
-            self.ai.parse()
+            self.__ai.parse()
         else:
             logger.debug("No need to map")
-        self.step = -1
+        self.__step = 0
 
-    def reset(self, step=-1):
-        self.step = step
+    @property 
+    def kart(self):
+        return self.__kart
+    
+    @property 
+    def ai(self):
+        return self.__ai
+    
+    @property
+    def step(self):
+        return self.__step
+
+    def reset(self, step=0):
+        self.__step = step
 
     def move(self, string):
-        self.step += 1
-        time.sleep(0.02)
-        return self.ai.move(self.step)
+        time.sleep(0.01)
+        logger.debug("Step %i", self.__step)
+        keys = self.__ai.move(self.__step)
+        self.__step+=1
+        return keys
+        

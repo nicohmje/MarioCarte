@@ -3,19 +3,23 @@ from grass import Grass
 import track
 
 class Lava():  # Vous pouvez ajouter des classes parentes
-    surface_type = 0.02
-    color = (159, 45, 32)
+    __surface_type = 0.02
+    __color = (159, 45, 32)
     sound = None
 
+    @classmethod
+    def surface_type_(cls):
+        return cls.__surface_type
 
     def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
+        self.__rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
         pass
     
     def draw(self, screen):
-        if (Grass.track_texture is None):
+        if (Lava.sound is None):
             Lava.sound = pygame.mixer.Sound("sounds/lava.wav")
-            pygame.draw.rect(screen, self.color, self.rect)    
+        if (Grass.track_texture is None):
+            pygame.draw.rect(screen, Lava.__color, self.__rect)    
         pass
     
     # A completer
