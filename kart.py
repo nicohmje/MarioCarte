@@ -398,7 +398,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             skew = (-1.,1.) 
             vec_scale = 0.8
 
-        if (not self.__controller.is_ai):
+        if (not self.__controller.is_ai and Kart.__nbr_of_karts > 1):
             pygame.draw.circle(screen, (255,255,0), [self.__position[0], self.__position[1]-30], 5)
 
         pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
