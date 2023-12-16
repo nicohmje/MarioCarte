@@ -162,6 +162,7 @@ initial_angle = 0.
 
 controller_2 =  Human()  # ou AI()
 controller = AI(string,initial_position, initial_angle)
+
 """
 ==================== ATTENTION =====================
 Vous ne devez pas modifier ces quatre lignes de code 
@@ -171,6 +172,6 @@ Vous ne devez pas modifier ces quatre lignes de code
 kart = Kart(controller)
 kart2 = Kart(controller_2)
 track = Track(string, initial_position, initial_angle)
-track.add_kart(kart)
 track.add_kart(kart2)
+track.add_kart(kart)
 track.play()

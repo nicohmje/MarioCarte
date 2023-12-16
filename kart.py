@@ -38,6 +38,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
     __nbr_of_karts = 0
     __splash_screen = None
+    __music_playing = False
+    __ongrass = 0
     __screen_size = None
 
     sound = None
@@ -63,6 +65,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     def orientation(self):
         return self.__orientation
     
+    @classmethod
+    def nbr_of_karts_(cls):
+        return Kart.__nbr_of_karts
+    
+    def __del__(self):
+        Kart.__nbr_of_karts -= 1
 
     def __init__(self, controller):
 
@@ -71,6 +79,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__controller = controller
 
         Kart.__nbr_of_karts += 1
+        
 
         self.__id = Kart.__nbr_of_karts
 
@@ -86,6 +95,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__checkpoint_pos = np.array([150,150])
         self.__checkpoint_orient = 0.
         self.__checkpoint_step = 0
+
+        self.__grass = False
         
 
         self.__start_time = time.time_ns()
@@ -95,10 +106,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__initialized = False
 
-        self.__best_time = 0.0
+        self.__best_time = 0
 
         self.__input = 0 #1 FORW 2 LEFT 3 RIGHT 4 BACK
-        self.__music_playing = False
 
         pass
        
@@ -157,14 +167,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         #INITIALIZATION 
         if (not self.__initialized):
-            if 'C' in string:
-                self.__checkpoint_nbr = 1
-            if 'D' in string:
-                self.__checkpoint_nbr = 2
-            if 'E' in string:
-                self.__checkpoint_nbr = 3
             if 'F' in string:
                 self.__checkpoint_nbr = 4
+            elif 'E' in string:
+                self.__checkpoint_nbr = 3
+            elif 'D' in string:
+                self.__checkpoint_nbr = 2
+            elif 'C' in string:
+                self.__checkpoint_nbr = 1
+            else:
+                raise ValueError("Track string contains no checkpoints. They are represented by the letters C,D,E and F.")
+            
+            
             
             i,j = 0,0
             for char in string:
@@ -192,17 +206,22 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             string_letter = ord(self.__char_map[int(np.floor(self.__position[0]/track.BLOCK_SIZE)), int(np.floor(self.__position[1]/track.BLOCK_SIZE))])
 
 
-            if string_letter == ord('G') and not self.__music_playing:
+            if string_letter == ord('G') and not Kart.__music_playing and not self.__grass:
                 pygame.mixer.music.play(-1)
                 f = Grass.surface_type_()
-                self.__music_playing = True
-            elif string_letter == ord('G') and self.__music_playing:
+                Kart.__music_playing = True
+                Kart.__ongrass += 1
+                self.__grass = True
+            elif string_letter == ord('G') and Kart.__music_playing:
                 f = Grass.surface_type_()
 
-            if not string_letter == ord('G') and self.__music_playing :
+            if not string_letter == ord('G') and Kart.__music_playing and self.__grass:
                 #logger.debug("Kart number %i: stop grass sound")
-                pygame.mixer.music.fadeout(300)
-                self.__music_playing = False
+                Kart.__ongrass -=1
+                if (not Kart.__ongrass):
+                    pygame.mixer.music.fadeout(300)
+                Kart.__music_playing = False
+                self.__grass = False
 
             match string_letter:
                 case 66: #ASCII FOR B
@@ -224,16 +243,16 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                     if cur_checkpoint > self.__checkpoint + 1:
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
-                        self.__end_time = time.time_ns()
+                        #self.__end_time = time.time_ns()
 
                         self.__has_finished = False
 
-                        time_took = self.__end_time - self.__start_time
-                        if (time_took*1e-9 < self.__best_time or self.__best_time == 0.0):
-                            self.__best_time = time_took*1e-9
+                        #time_took = self.__end_time - self.__start_time
+                        if (self.controller.step < self.__best_time or self.__best_time == 0):
+                            self.__best_time = self.controller.step
 
-                        logger.info("Finished in %fs", time_took*1e-9)
-                        self.__start_time = time.time_ns()
+                        logger.info("Finished in %i steps", self.controller.step)
+                        #self.__start_time = time.time_ns()
                         self.reset([150.,150.], 0., -1)
                         self.__checkpoint = 0
                         pass
@@ -259,7 +278,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.__velocity = np.array([round(25 * np.cos(self.__orientation),4), round(25*np.sin(self.__orientation),4)])
             
 
-            if TEXT and not self.__controller.is_ai:
+            if TEXT and not (self.__controller.is_ai and Kart.nbr_of_karts_()>1):
                 status_checkpoint_str = "Checkpoint: " + str(self.__checkpoint)
                 font = pygame.font.SysFont(None, size=36)  # You can adjust the size as needed
                 text = font.render(status_checkpoint_str, True, (0,0,0))
@@ -269,18 +288,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
                 font = pygame.font.SysFont(None, size=60)  # You can adjust the size as needed
-                if (((time.time_ns() - self.__start_time)*1e-9)> self.__best_time) : 
+                if ((self.controller.step)> self.__best_time) : 
                     color = (255, 30, 30)
                 else:
                     color = (0, 0, 0)
                     
-                text = font.render(("%0.2f s" % ((time.time_ns() - self.__start_time)*1e-9)), True, color)
+                text = font.render(("%4i steps" % (self.controller.step)), True, color)
                 text_rect = text.get_rect()
                 text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2)  # Adjust the position as needed
                 screen.blit(text, text_rect)
 
                 font = pygame.font.SysFont(None, size=40)  # You can adjust the size as needed
-                text = font.render(("Best time: %0.2f s" % self.__best_time), True, (0,0,0))
+                text = font.render(("Best time: %4i steps" % self.__best_time), True, (0,0,0))
                 text_rect = text.get_rect()
                 text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2+100)  # Adjust the position as needed
                 screen.blit(text, text_rect)
@@ -358,9 +377,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
             self.__initialized = True
-            if self.__id == 1:
+            logger.info("ID: %i, is ai? %s nbr of karts: %i", self.__id, self.controller.is_ai, Kart.nbr_of_karts_())
+            if self.__id == Kart.nbr_of_karts_():
                 Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
-            self.__start_time = time.time_ns()
+            #self.__start_time = time.time_ns()
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
         # quadr = Common.quadrant(float(self.__orientation))

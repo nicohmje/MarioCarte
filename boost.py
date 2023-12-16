@@ -1,16 +1,18 @@
 import track
 import pygame
 from grass import Grass
+from block import Block
 
 #Class for the boost block
 
 
-class Boost():  # Vous pouvez ajouter des classes parentes
+class Boost(Block):  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
     __color = (149, 40, 143)
     sound = None
 
-    @classmethod
+
+    @classmethod    
     def surface_type_(cls):
         return cls.__surface_type
 

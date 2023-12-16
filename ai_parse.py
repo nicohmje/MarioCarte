@@ -15,7 +15,7 @@ logger = logging.getLogger('MariooCarteLogger')
 
 #This is to determine the commands the AI should execute to finish the track.
 #Note that the MAPPING.PY file includes the initial A* path finding.
-#This file then determines the commmands to try and follow the path.
+#This file then determines the commmands to execute to try and follow the path while avoiding lava.
 
 class AI_PARSE():  
 
@@ -28,6 +28,7 @@ class AI_PARSE():
         self.f = 0.02
 
         AI_PARSE.need_to_map = False
+
         try:
             track_string_file = np.load('ai_files/track_string.npy')
             logger.info("LOADED STRING")
@@ -46,6 +47,10 @@ class AI_PARSE():
                 np.save('ai_files/track_string.npy', np.array(self.track_string))
                 AI_PARSE.need_to_map = True
         except:
+            try:
+                os.mkdir('ai_files')
+            except:
+                pass
             np.save('ai_files/track_string.npy', np.array(self.track_string))
             track_string_file = str("john")
             AI_PARSE.need_to_map = True
@@ -101,6 +106,8 @@ class AI_PARSE():
             self.hauteur = AI_PARSE.track.shape[0]
             
             self.kart = Kart(AI_PARSE.path)
+
+            print("ihaDBEIUduib")
 
             logger.debug("TRACK ARRAY %s", AI_PARSE.track[140:145,153:158])
 
@@ -382,6 +389,7 @@ class AI_PARSE():
             step +=1
         
         np.save('ai_files/ai_commands.npy', np.array(self.command))
+        del self.kart
         AI_PARSE.need_to_map = False
 
     def move(self,step):

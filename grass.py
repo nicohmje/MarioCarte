@@ -2,6 +2,8 @@ import pygame
 import numpy as np
 import track
 import logging
+from block import Block
+
 
 logger = logging.getLogger('MariooCarteLogger')
 
@@ -9,10 +11,9 @@ logger = logging.getLogger('MariooCarteLogger')
 #Class for the grass block
 #It also handles the texture loading and track texture saving & displaying.
 
-class Grass():  
+class Grass(Block):  
 
     __surface_type = 0.2
-    __color = (255, 0, 132)
     nbr_of_grass = 0 
 
     track_texture = None
