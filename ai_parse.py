@@ -2,7 +2,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 # from typing import NamedTuple
 # import random
-# import time
+import time
 # import math
 from Mapping import mapping
 from kart import Kart
@@ -11,6 +11,11 @@ import os
 import logging
 
 logger = logging.getLogger('MariooCarteLogger')
+
+
+#This is to determine the commands the AI should execute to finish the track.
+#Note that the MAPPING.PY file includes the initial A* path finding.
+#This file then determines the commmands to execute to try and follow the path while avoiding lava.
 
 class AI_PARSE():  
 
@@ -23,6 +28,7 @@ class AI_PARSE():
         self.f = 0.02
 
         AI_PARSE.need_to_map = False
+
         try:
             track_string_file = np.load('ai_files/track_string.npy')
             logger.info("LOADED STRING")
@@ -41,6 +47,10 @@ class AI_PARSE():
                 np.save('ai_files/track_string.npy', np.array(self.track_string))
                 AI_PARSE.need_to_map = True
         except:
+            try:
+                os.mkdir('ai_files')
+            except:
+                pass
             np.save('ai_files/track_string.npy', np.array(self.track_string))
             track_string_file = str("john")
             AI_PARSE.need_to_map = True
@@ -106,7 +116,7 @@ class AI_PARSE():
 
         
 
-    def parse(self):
+    def parse(self, safe_mode):
 
         logger.info("STARTED FINDING PATH FOR AI")
         success = False
@@ -119,7 +129,15 @@ class AI_PARSE():
         intersect = False
         distance = 0
 
+
         turning_left, turning_right = False, False
+
+        cp_positions = []
+        for i in range(4):        
+            cp_positions.append(np.argwhere(AI_PARSE.track == 101+i))
+
+        nbr_cp = 4 - (int(not len(cp_positions[0])) + int(not len(cp_positions[1]))+ int(not len(cp_positions[2]))+ int(not len(cp_positions[3])))
+
 
         while (not(success)):
             
@@ -216,7 +234,7 @@ class AI_PARSE():
                 delta =  2*np.pi + delta 
 
 
-            braking = self.kart.check_radar_speed(delta)
+            braking = self.kart.check_radar_speed(delta, safe_mode)
 
 
 
@@ -241,6 +259,7 @@ class AI_PARSE():
             
 
             
+            logger.debug("STEP %i", step)
             logger.debug("POS X %i, POS Y %i", cur_pos_x,cur_pos_y)  
             logger.debug("POINT %i, CURRENT VEL %f", current_point, np.linalg.norm(self.kart.velocity))
 
@@ -276,7 +295,7 @@ class AI_PARSE():
                 lava_vector = np.array([(lava_pos[0]-cur_pos_x), (lava_pos[1]-cur_pos_y)])
                 distance = np.linalg.norm(lava_vector)
 
-                angle_to_lava = np.arccos(np.dot(self.kart.velocity, lava_vector)/ (velocity_norm * distance))
+                angle_to_lava = np.arccos(np.dot(self.kart.velocity, lava_vector)/ ((velocity_norm * distance)+1e-3))
 
                 if abs(angle_to_lava)>1.75:
                     logger.debug("ANGLE TO LAVA: %f", angle_to_lava)
@@ -334,6 +353,14 @@ class AI_PARSE():
                 logger.debug("CHOICE7 %f", delta)
 
             
+            # if (safe_mode):
+            #     if (angle_to_lava > 0. and angle_to_lava < 1.5) or oob_left:
+            #         braking = True
+            #         delta = -1.
+            #     elif (angle_to_lava < 0. and angle_to_lava > -1.5) or oob_right:
+            #         braking = True
+            #         delta = 1.
+            
 
 
             if np.abs(delta) > 0.03:
@@ -365,18 +392,21 @@ class AI_PARSE():
             y_ = (np.copy(self.kart.position[1]))
             # x.append(-1*self.kart.position[0])
             # y.append(self.kart.position[1])
-            if self.kart.map[int(x_)][int(y_)]==104:
+            if self.kart.checkpoint==nbr_cp:
                 success = True
                 logger.info('Successfully finished the map')
                 break
             elif self.kart.map[int(x_)][int(y_)] == 10:
-                logger.info("LAVA")
-                # time.sleep(2)
+                self.kart.reset(self.kart.checkpoint_pos, self.kart.checkpoint_orient, step=np.NaN)
+                logger.info("RESET")
+                time.sleep(2)
 
-            
+            # if step>472 and safe_mode:
+            #     time.sleep(0.5)
             step +=1
         
         np.save('ai_files/ai_commands.npy', np.array(self.command))
+        del self.kart
         AI_PARSE.need_to_map = False
 
     def move(self,step):
@@ -522,4 +552,3 @@ class AI_PARSE():
                 return lava_detected, distance
 
         return False, 50000
-

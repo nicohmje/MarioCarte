@@ -1,10 +1,12 @@
-import track
 import pygame
-from grass import Grass
+from block import Block
 
-class Road():  # Vous pouvez ajouter des classes parentes
+
+
+
+class Road(Block):  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
-    __color = (33, 41, 48)
+    __color = (33, 25, 48)
     sound = None
 
     @classmethod
@@ -12,12 +14,15 @@ class Road():  # Vous pouvez ajouter des classes parentes
         return cls.__surface_type
 
     def __init__(self, x, y):
-        self.__rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
+        super().__init__(x,y)
         pass
     
     def draw(self, screen):
-        if (Grass.track_texture is None):
-            pygame.draw.rect(screen, Road.__color, self.__rect)    
+
+        if (Block.track_texture is None):
+            pygame.draw.rect(screen, Road.__color, self._rect)  
+
+        super().draw(screen)
         pass
     
     # A completer

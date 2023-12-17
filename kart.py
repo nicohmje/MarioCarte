@@ -10,12 +10,18 @@ import track
 import game
 import time
 import logging
-
-
-
-# ROAD MAP: ADD TRAIL (and boosting effect) || FIX AI AND HUMAN
-
 from common import Common
+
+
+
+
+#This is the Kart class.
+#It includes the necessary functions to make an AI or Human powered Kart work. It also includes some texture loading for the Kart's sprite.
+
+
+
+
+
 
 MAX_ANGLE_VELOCITY = 0.05
 MAX_ACCELERATION = 0.25
@@ -26,7 +32,6 @@ TEXT = True
 logger = logging.getLogger('MariooCarteLogger')
 
 
-
 class Kart():  # Vous pouvez ajouter des classes parentes
     """
     Classe implementant l'affichage et la physique du kart dans le jeu
@@ -34,6 +39,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
     __nbr_of_karts = 0
     __splash_screen = None
+    __music_playing = False
+    __ongrass = 0
     __screen_size = None
 
     sound = None
@@ -44,12 +51,23 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         return self.__has_finished
     
     @property 
+    def checkpoint(self):
+        return self.__checkpoint
+
+    @property 
     def controller(self):
         return self.__controller
     
     @property 
     def position(self):
         return self.__position
+    
+    @property 
+    def checkpoint_pos(self):
+        return self.__checkpoint_pos
+    @property 
+    def checkpoint_orient(self):
+        return self.__checkpoint_orient
     
     @property 
     def velocity(self):
@@ -59,6 +77,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     def orientation(self):
         return self.__orientation
     
+    @classmethod
+    def nbr_of_karts_(cls):
+        return Kart.__nbr_of_karts
+    
+    def __del__(self):
+        Kart.__nbr_of_karts -= 1
 
     def __init__(self, controller):
 
@@ -67,12 +91,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__controller = controller
 
         Kart.__nbr_of_karts += 1
+        
 
         self.__id = Kart.__nbr_of_karts
 
         self.__position = np.array([0.,0.], dtype=float)       
         self.__orientation = 0
-
         self.__velocity = np.array([0.,0.], dtype=float)
 
         self.__acceleration = 0
@@ -82,6 +106,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__checkpoint_pos = np.array([150,150])
         self.__checkpoint_orient = 0.
         self.__checkpoint_step = 0
+
+        self.__grass = False
         
 
         self.__start_time = time.time_ns()
@@ -91,19 +117,24 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__initialized = False
 
-        self.__best_time = 0.0
+        self.__best_time = 0
 
         self.__input = 0 #1 FORW 2 LEFT 3 RIGHT 4 BACK
-        self.__music_playing = False
 
         pass
        
     def reset(self, initial_position, initial_orientation, step=0):
         self.__position = np.copy(initial_position)
-        self.__orientation = np.copy(initial_orientation)        
-        self.__velocity = np.array([0.,0.])
-        if self.__initialized:
+        self.__orientation = np.copy(initial_orientation)
+        self.__velocity = np.array([0.,0.], dtype=float)
+        self.__acceleration_c = 0
+        self.__acceleration = 0
+        if self.__initialized and not np.isnan(step):
             self.__controller.reset(step)
+            self.__checkpoint_pos = np.copy(self.controller.initial_position)
+            self.__position = np.copy(self.controller.initial_position)
+            self.__orientation = np.copy(self.controller.initial_angle)
+            self.__checkpoint_orient = np.copy(self.controller.initial_angle)
             # time.sleep(4)
         pass
         
@@ -111,7 +142,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__acceleration_c += MAX_ACCELERATION
         self.__input = 1
 
-        logger.debug("Kart number %i: FORWARDS", self.__id)
+        logger.debug("Kart number %i: FORWARDS, pos %s", self.__id, self.__position)
 
         pass
     
@@ -142,6 +173,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pass
     
     def update_position(self, string, screen):
+
          
         #logger.debug("Kart number %i: POSITION TYPE: %s", self.__id, self.__position.dtype)
 
@@ -153,14 +185,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         #INITIALIZATION 
         if (not self.__initialized):
-            if 'C' in string:
-                self.__checkpoint_nbr = 1
-            if 'D' in string:
-                self.__checkpoint_nbr = 2
-            if 'E' in string:
-                self.__checkpoint_nbr = 3
             if 'F' in string:
                 self.__checkpoint_nbr = 4
+            elif 'E' in string:
+                self.__checkpoint_nbr = 3
+            elif 'D' in string:
+                self.__checkpoint_nbr = 2
+            elif 'C' in string:
+                self.__checkpoint_nbr = 1
+            else:
+                raise ValueError("Track string contains no checkpoints. They are represented by the letters C,D,E and F.")
+            
+            
             
             i,j = 0,0
             for char in string:
@@ -171,15 +207,16 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                     i = 0
                 else:
                     i += 1
-            self.__char_map = self.__char_map[0:i+1, 0:j+1]
+            # print(np.shape(self.__char_map))
+            # self.__char_map = np.resize(self.__char_map, (i+1, j+1))
+            # print(np.shape(self.__char_map))
             pygame.mixer.music.load("sounds/grass.wav")
 
         if Kart.__started:
             boosting = False    
 
-            self.__orientation = Common.RadiansLim(self.__orientation)
 
-            self.next_checkpoint_id = self.__checkpoint + 1
+            self.__orientation = Common.RadiansLim(self.__orientation)
 
             theta_v = math.atan2(self.__velocity[1], self.__velocity[0])
 
@@ -189,17 +226,22 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             string_letter = ord(self.__char_map[int(np.floor(self.__position[0]/track.BLOCK_SIZE)), int(np.floor(self.__position[1]/track.BLOCK_SIZE))])
 
 
-            if string_letter == ord('G') and not self.__music_playing:
+            if string_letter == ord('G') and not Kart.__music_playing and not self.__grass:
                 pygame.mixer.music.play(-1)
                 f = Grass.surface_type_()
-                self.__music_playing = True
-            elif string_letter == ord('G') and self.__music_playing:
+                Kart.__music_playing = True
+                Kart.__ongrass += 1
+                self.__grass = True
+            elif string_letter == ord('G') and Kart.__music_playing:
                 f = Grass.surface_type_()
 
-            if not string_letter == ord('G') and self.__music_playing :
+            if not string_letter == ord('G') and Kart.__music_playing and self.__grass:
                 #logger.debug("Kart number %i: stop grass sound")
-                pygame.mixer.music.fadeout(300)
-                self.__music_playing = False
+                Kart.__ongrass -=1
+                if (not Kart.__ongrass):
+                    pygame.mixer.music.fadeout(300)
+                Kart.__music_playing = False
+                self.__grass = False
 
             match string_letter:
                 case 66: #ASCII FOR B
@@ -213,7 +255,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 case 76: #ASCII FOR L
                     pygame.mixer.Sound.play(Lava.sound)
                     f = Checkpoint.surface_type_()
-                    self.reset(np.array(self.__checkpoint_pos), self.__checkpoint_orient, self.__checkpoint_step)
+                    self.reset(np.array(self.__checkpoint_pos), self.__checkpoint_orient, np.nan)
 
                 case 67|68|69|70:
                     f = Checkpoint.surface_type_()
@@ -221,21 +263,21 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                     if cur_checkpoint > self.__checkpoint + 1:
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
-                        self.__end_time = time.time_ns()
 
                         self.__has_finished = False
 
-                        time_took = self.__end_time - self.__start_time
-                        if (time_took*1e-9 < self.__best_time or self.__best_time == 0.0):
-                            self.__best_time = time_took*1e-9
+                        #time_took = self.__end_time - self.__start_time
+                        if (self.controller.step < self.__best_time or self.__best_time == 0):
+                            self.__best_time = self.controller.step
 
-                        logger.info("Finished in %fs", time_took*1e-9)
-                        self.__start_time = time.time_ns()
-                        self.reset([150.,150.], 0., -1)
+                        logger.info("Finished in %i steps", self.controller.step)
+                        #self.__start_time = time.time_ns()
+                        self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
                         self.__checkpoint = 0
                         pass
                     elif cur_checkpoint>self.__checkpoint:
-                        logger.info("Checkpoint reached: %i" , cur_checkpoint)
+                        if (not self.__controller.is_ai):
+                            logger.info("Checkpoint reached: %i" , cur_checkpoint)
                         pygame.mixer.Sound.play(Checkpoint.sound)
                         self.__checkpoint = cur_checkpoint
                         self.__checkpoint_step = self.__controller.step
@@ -255,7 +297,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 self.__velocity = np.array([round(25 * np.cos(self.__orientation),4), round(25*np.sin(self.__orientation),4)])
             
 
-            if TEXT:
+            if TEXT and not (self.__controller.is_ai and Kart.nbr_of_karts_()>1):
                 status_checkpoint_str = "Checkpoint: " + str(self.__checkpoint)
                 font = pygame.font.SysFont(None, size=36)  # You can adjust the size as needed
                 text = font.render(status_checkpoint_str, True, (0,0,0))
@@ -265,18 +307,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
                 font = pygame.font.SysFont(None, size=60)  # You can adjust the size as needed
-                if (((time.time_ns() - self.__start_time)*1e-9)> self.__best_time) : 
+                if ((self.controller.step)> self.__best_time) : 
                     color = (255, 30, 30)
                 else:
                     color = (0, 0, 0)
                     
-                text = font.render(("%0.2f s" % ((time.time_ns() - self.__start_time)*1e-9)), True, color)
+                text = font.render(("%4i steps" % (self.controller.step)), True, color)
                 text_rect = text.get_rect()
                 text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2)  # Adjust the position as needed
                 screen.blit(text, text_rect)
 
                 font = pygame.font.SysFont(None, size=40)  # You can adjust the size as needed
-                text = font.render(("Best time: %0.2f s" % self.__best_time), True, (0,0,0))
+                text = font.render(("Best time: %4i steps" % self.__best_time), True, (0,0,0))
                 text_rect = text.get_rect()
                 text_rect.center = (Kart.__screen_size[0]//2, Kart.__screen_size[1]//2+100)  # Adjust the position as needed
                 screen.blit(text, text_rect)
@@ -284,36 +326,35 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             #logger.debug("Kart number %i: accel: %s ; velocity(norm): %s ; velocity : %s ", self.__id, self.__acceleration, np.linalg.norm(self.__velocity), self.__velocity)
 
             self.__position = self.__position.astype(float)
+            
+
 
             #Bound the position to the screen. Account for the position being the top left of the rectangle. Adapt if switching from rec to pic maybe.
-            if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]-20.):
+            if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]):
                 self.__position[0] += self.__velocity[0]
             else:
-                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
                 return
-            if (self.__position[1] + self.__velocity[1]>1 and self.__position[1] + self.__velocity[1] < Kart.__screen_size[1]-20):
+            if (self.__position[1] + self.__velocity[1]>0. and self.__position[1] + self.__velocity[1] < Kart.__screen_size[1]):
                 self.__position[1] = self.__position[1] + self.__velocity[1]
             else:
-                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
                 return
+            
             
             
             self.__acceleration_c = 0
         pass
     
     def draw(self, screen):
+
         kart_position = np.copy(self.__position)
-        kart_radius = 20
-
-
-
 
         #IF NONE OF THE TEXTURES HAVE BEEN LOADED, LOAD THEM:
         if (not self.__initialized):
             scale = 0.05
 
             Kart.__splash_screen = pygame.image.load("textures/splash_screen.jpg").convert()
-
 
 
             Kart.texture_top_fast = pygame.image.load("textures/Kart/forw_fast.png").convert_alpha()
@@ -352,12 +393,15 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
             self.__initialized = True
-            Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
-            self.__start_time = time.time_ns()
+            logger.debug("ID: %i, is ai? %s nbr of karts: %i", self.__id, self.controller.is_ai, Kart.nbr_of_karts_())
+            if self.__id == Kart.nbr_of_karts_():
+                Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+                self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
+            #self.__start_time = time.time_ns()
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
         # quadr = Common.quadrant(float(self.__orientation))
-        vel_scale = 0 
+        vel_scale = 0
 
         if (np.linalg.norm(self.__velocity)>2 and np.linalg.norm(self.__velocity)<5):
             vel_scale = 1
@@ -368,54 +412,52 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.__orientation))
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
-        Vel_dir = self.__velocity / (max(np.abs(self.__velocity)) +1e-3)
+        if (not self.__controller.is_ai and Kart.__nbr_of_karts > 1):
+            pygame.draw.circle(screen, (255,255,0), [self.__position[0], self.__position[1]-30], 5)
 
-        Ratio = max(min(np.linalg.norm(self.__velocity)*20, 230), 45)
+        if (self.__controller.is_ai):
+            Vel_dir = self.__velocity / (max(np.abs(self.__velocity)) +1e-3)
 
-        future_x = int(Ratio*Vel_dir[0])
-        future_y = int(Ratio*Vel_dir[1])
+            Ratio = max(min(np.linalg.norm(self.__velocity)*20, 230), 45)
 
+            future_x = int(Ratio*Vel_dir[0])
+            future_y = int(Ratio*Vel_dir[1])
 
-        k = 0.5
-        angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
-        vec_scale = 1/1
+            k = 0.5
+            angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
+            vec_scale = 1/1
 
-        if np.linalg.norm(self.__velocity) < 2:
-                angle = 1.2 
+            if np.linalg.norm(self.__velocity) < 2:
+                    angle = 1.2 
 
-        skew = (0.,0.)
+            skew = (0.,0.)
 
-        if self.__input == 3:
-            skew = (1.,-1.) #pos is left
-            vec_scale = 0.8
-        elif self.__input == 2:
-            skew = (-1.,1.) 
-            vec_scale = 0.8
+            if self.__input == 3:
+                skew = (1.,-1.) #pos is left
+                vec_scale = 0.8
+            elif self.__input == 2:
+                skew = (-1.,1.) 
+                vec_scale = 0.8
 
+            pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
+            pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
 
+            neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
+            neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
 
-        pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
-        pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
-
-        neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
-        neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
-
-        pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
-
-
+            pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
+            pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
+            pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
 
         self.__input = 0 
 
-
-    def check_radar_speed(self,delta):
+    def check_radar_speed(self,delta, safe_mode):
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.__velocity))
         if abs(delta) < 0.2 and (np.linalg.norm(self.__velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.__velocity) >= 15.:
+        elif np.linalg.norm(self.__velocity) >= (15.,5.)[safe_mode]:
             braking = True
             return braking
         elif abs(delta) > 1.2:
@@ -450,6 +492,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         if point >= 101 and point <=104:
             f = Checkpoint.surface_type_()
+            if point-100 > self.__checkpoint + 1:
+                pass
+            elif point-100 > self.__checkpoint:
+                self.__checkpoint = point-100
+                self.__checkpoint_pos = np.copy(self.__position)
+                self.__checkpoint_orient = np.copy(self.__orientation)
+
             return 'ap',boosting, f 
 
         match point:
@@ -476,8 +525,14 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         py = float(p[1])
 
         obj_vec = np.array([px - self.__position[0], py - self.__position[1]]) #Kart to object
-        #angle_to_lava = np.arccos(np.dot(self.__velocity, obj_vec)/ (np.linalg.norm(self.__velocity) * np.linalg.norm(obj_vec)))
-        
+
+        X = np.array(self.__position, dtype=np.int16)
+        point = self.map[int(px)][int(py)]
+        if point >= 101 and point <=104:
+            if point-100 > self.__checkpoint+1:
+                pass
+            elif point-100 > self.__checkpoint:
+                return
 
         #We now compute the Kart to object vector in the Kart frame
         obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.__orientation) - obj_vec[1]*np.sin(-1*self.__orientation), obj_vec[0]*np.sin(-1*self.__orientation) + obj_vec[1] * np.cos(-1*self.__orientation)])
@@ -488,7 +543,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         #If the point is inside that ellipse, we'll delete it, as long as it isn't the last point. 
         if (obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1) and (p!=self.path[-1]):
             self.path.remove(p)
-            #print('removed :',p)
 
     def create_map(self,useable_array):
         self.map = useable_array
@@ -504,15 +558,20 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         else:
                 self.__velocity = (BOOST_SPEED * np.cos(self.__orientation), BOOST_SPEED*np.sin(self.__orientation))
                         
-        if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < np.shape(self.__char_map)[0]):
+        if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < np.shape(self.map)[0]):
                 self.__position[0] += self.__velocity[0]
         else:
-            pass
+            self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
+            logger.warn("Exited boundary")
+            # raise Exception("Exited boundary")
         
-        if (self.__position[1] + self.__velocity[1]>0 and self.__position[1] + self.__velocity[1] < np.shape(self.__char_map)[1]-20):
+        if (self.__position[1] + self.__velocity[1]>0. and self.__position[1] + self.__velocity[1] < np.shape(self.map)[1]):
             self.__position[1] = self.__position[1] + self.__velocity[1]
         else:
-            pass
+            self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
+            logger.warn("Exited boundary")
+            # raise Exception("Exited boundary")
+
 
         logger.debug("MAP SIZE: %s", np.shape(self.__char_map))
 

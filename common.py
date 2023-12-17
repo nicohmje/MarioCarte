@@ -1,5 +1,11 @@
 #pragma once
 
+
+
+#Common class for common functions
+
+
+
 class Common():
 
 
