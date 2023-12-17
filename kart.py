@@ -19,15 +19,18 @@ from common import Common
 #It includes the necessary functions to make an AI or Human powered Kart work. It also includes some texture loading for the Kart's sprite.
 
 
+#CONFIGURATION
+
+TEXT = True #Text displaying current steps and best steps to finish.  
+FINISH_EXIT = True #Determines if the program exits or resets once you reach the finish line. 
+SPLASH_SCREEN = True #Determines if the game shows the splash screen.
 
 
-
+#PARAMETERS
 
 MAX_ANGLE_VELOCITY = 0.05
 MAX_ACCELERATION = 0.25
 BOOST_SPEED = 25.
-
-TEXT = True
 
 logger = logging.getLogger('MariooCarteLogger')
 
@@ -264,7 +267,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
 
-                        self.__has_finished = False
+                        self.__has_finished = FINISH_EXIT
 
                         #time_took = self.__end_time - self.__start_time
                         if (self.controller.step < self.__best_time or self.__best_time == 0):
@@ -395,7 +398,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             self.__initialized = True
             logger.debug("ID: %i, is ai? %s nbr of karts: %i", self.__id, self.controller.is_ai, Kart.nbr_of_karts_())
             if self.__id == Kart.nbr_of_karts_():
-                Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+                if SPLASH_SCREEN:
+                    Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+                else:
+                    Kart.__started = True
                 self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
             #self.__start_time = time.time_ns()
 
