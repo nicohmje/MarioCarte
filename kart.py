@@ -264,13 +264,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
 
-                        self.__has_finished = False
+                        self.__has_finished = True
 
                         #time_took = self.__end_time - self.__start_time
                         if (self.controller.step < self.__best_time or self.__best_time == 0):
                             self.__best_time = self.controller.step
 
-                        logger.info("Finished in %i steps", self.controller.step)
+                        # logger.info("Finished in %i steps", self.controller.step)
                         #self.__start_time = time.time_ns()
                         self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
                         self.__checkpoint = 0
@@ -527,12 +527,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         obj_vec = np.array([px - self.__position[0], py - self.__position[1]]) #Kart to object
 
         X = np.array(self.__position, dtype=np.int16)
-        point = self.map[int(px)][int(py)]
-        if point >= 101 and point <=104:
-            if point-100 > self.__checkpoint+1:
-                pass
-            elif point-100 > self.__checkpoint:
-                return
+        # point = self.map[int(px)][int(py)]
+        # if point >= 101 and point <=104:
+        #     if point-100 > self.__checkpoint+1:
+        #         pass
+        #     elif point-100 > self.__checkpoint:
+        #         return
 
         #We now compute the Kart to object vector in the Kart frame
         obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.__orientation) - obj_vec[1]*np.sin(-1*self.__orientation), obj_vec[0]*np.sin(-1*self.__orientation) + obj_vec[1] * np.cos(-1*self.__orientation)])
