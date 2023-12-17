@@ -7,6 +7,11 @@ from kart import Kart
 #this is the class for the human controller. It parses the commanded key and returns it. 
 
 class Human(Controller):
+
+    def __init__(self,initial_position, initial_angle):
+        super().__init__()
+        self.initial_position = initial_position
+        self.initial_angle = initial_angle
     
     def move(self, string):
         delay = (1./(120.*Kart.nbr_of_karts_()))

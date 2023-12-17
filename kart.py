@@ -10,6 +10,8 @@ import track
 import game
 import time
 import logging
+from common import Common
+
 
 
 
@@ -20,7 +22,6 @@ import logging
 
 
 
-from common import Common
 
 MAX_ANGLE_VELOCITY = 0.05
 MAX_ACCELERATION = 0.25
@@ -49,6 +50,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     def has_finished(self):
         return self.__has_finished
     
+    @property 
+    def checkpoint(self):
+        return self.__checkpoint
+
     @property 
     def controller(self):
         return self.__controller
@@ -115,7 +120,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
     def reset(self, initial_position, initial_orientation, step=0):
         self.__position = np.copy(initial_position)
         self.__orientation = np.copy(initial_orientation)        
-        self.__velocity = np.array([0.,0.])
+        self.__velocity = np.array([0.,0.], dtype=float)
+        self.__acceleration_c = 0
+        self.__acceleration = 0
         if self.__initialized:
             self.__controller.reset(step)
             # time.sleep(4)
@@ -125,7 +132,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__acceleration_c += MAX_ACCELERATION
         self.__input = 1
 
-        logger.debug("Kart number %i: FORWARDS", self.__id)
+        logger.debug("Kart number %i: FORWARDS, pos %s", self.__id, self.__position)
 
         pass
     
@@ -156,6 +163,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pass
     
     def update_position(self, string, screen):
+
          
         #logger.debug("Kart number %i: POSITION TYPE: %s", self.__id, self.__position.dtype)
 
@@ -243,7 +251,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                     if cur_checkpoint > self.__checkpoint + 1:
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
-                        #self.__end_time = time.time_ns()
 
                         self.__has_finished = False
 
@@ -253,7 +260,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
                         logger.info("Finished in %i steps", self.controller.step)
                         #self.__start_time = time.time_ns()
-                        self.reset([150.,150.], 0., -1)
+                        self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
                         self.__checkpoint = 0
                         pass
                     elif cur_checkpoint>self.__checkpoint:
@@ -328,11 +335,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pass
     
     def draw(self, screen):
+
         kart_position = np.copy(self.__position)
-        kart_radius = 20
-
-
-
 
         #IF NONE OF THE TEXTURES HAVE BEEN LOADED, LOAD THEM:
         if (not self.__initialized):
@@ -377,9 +381,10 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
             self.__initialized = True
-            logger.info("ID: %i, is ai? %s nbr of karts: %i", self.__id, self.controller.is_ai, Kart.nbr_of_karts_())
+            logger.debug("ID: %i, is ai? %s nbr of karts: %i", self.__id, self.controller.is_ai, Kart.nbr_of_karts_())
             if self.__id == Kart.nbr_of_karts_():
                 Kart.__started = game.splash_screen(screen,Kart.__splash_screen, Kart.__started)
+                self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
             #self.__start_time = time.time_ns()
 
         #Figure out the orientation's cardinal direction, and blit the appropriate image. 
@@ -395,41 +400,42 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         output_texture = pygame.transform.rotate(output_texture, -1* Common.RadToDegrees(self.__orientation))
         screen.blit(output_texture, (kart_position[0]-(output_texture.get_height()/2), kart_position[1]-(output_texture.get_width()/2)))
 
-        Vel_dir = self.__velocity / (max(np.abs(self.__velocity)) +1e-3)
-
-        Ratio = max(min(np.linalg.norm(self.__velocity)*20, 230), 45)
-
-        future_x = int(Ratio*Vel_dir[0])
-        future_y = int(Ratio*Vel_dir[1])
-
-        k = 0.5
-        angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
-        vec_scale = 1/1
-
-        if np.linalg.norm(self.__velocity) < 2:
-                angle = 1.2 
-
-        skew = (0.,0.)
-
-        if self.__input == 3:
-            skew = (1.,-1.) #pos is left
-            vec_scale = 0.8
-        elif self.__input == 2:
-            skew = (-1.,1.) 
-            vec_scale = 0.8
-
         if (not self.__controller.is_ai and Kart.__nbr_of_karts > 1):
             pygame.draw.circle(screen, (255,255,0), [self.__position[0], self.__position[1]-30], 5)
 
-        pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
-        pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
+        if (self.__controller.is_ai):
+            Vel_dir = self.__velocity / (max(np.abs(self.__velocity)) +1e-3)
 
-        neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
-        neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
+            Ratio = max(min(np.linalg.norm(self.__velocity)*20, 230), 45)
 
-        pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
-        pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
+            future_x = int(Ratio*Vel_dir[0])
+            future_y = int(Ratio*Vel_dir[1])
+
+            k = 0.5
+            angle = 0.30 + 0.4 * (1 - np.exp(-k * np.linalg.norm(self.__velocity)))
+            vec_scale = 1/1
+
+            if np.linalg.norm(self.__velocity) < 2:
+                    angle = 1.2 
+
+            skew = (0.,0.)
+
+            if self.__input == 3:
+                skew = (1.,-1.) #pos is left
+                vec_scale = 0.8
+            elif self.__input == 2:
+                skew = (-1.,1.) 
+                vec_scale = 0.8
+
+            pos_rotated_velocity_vector_x = int(vec_scale*int(future_x  * np.cos(angle+ skew[0]*0.2) - future_y * np.sin(angle+ skew[0]*0.2)))
+            pos_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(angle+ skew[0]*0.2) + future_y * np.cos(angle+ skew[0]*0.2)))
+
+            neg_rotated_velocity_vector_x = int(vec_scale*int(future_x * np.cos(-(angle+ skew[1]*0.2)) - future_y * np.sin(-(angle+ skew[1]*0.2))))
+            neg_rotated_velocity_vector_y = int(vec_scale*int(future_x * np.sin(-(angle+ skew[1]*0.2)) + future_y * np.cos(-(angle+ skew[1]*0.2))))
+
+            pygame.draw.circle(screen, (255, 255, 255), [future_x+self.__position[0],future_y+self.__position[1]], 2.0)
+            pygame.draw.circle(screen, (255, 255, 255), [pos_rotated_velocity_vector_x+self.__position[0],pos_rotated_velocity_vector_y+self.__position[1]], 2.0)
+            pygame.draw.circle(screen, (255, 255, 255), [neg_rotated_velocity_vector_x+self.__position[0],neg_rotated_velocity_vector_y+self.__position[1]], 2.0)
 
         self.__input = 0 
 
@@ -474,6 +480,11 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         if point >= 101 and point <=104:
             f = Checkpoint.surface_type_()
+            if point-100 > self.__checkpoint + 1:
+                pass
+            elif point-100 > self.__checkpoint:
+                self.__checkpoint = point-100
+
             return 'ap',boosting, f 
 
         match point:
@@ -500,8 +511,14 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         py = float(p[1])
 
         obj_vec = np.array([px - self.__position[0], py - self.__position[1]]) #Kart to object
-        #angle_to_lava = np.arccos(np.dot(self.__velocity, obj_vec)/ (np.linalg.norm(self.__velocity) * np.linalg.norm(obj_vec)))
-        
+
+        X = np.array(self.__position, dtype=np.int16)
+        point = self.map[int(px)][int(py)]
+        if point >= 101 and point <=104:
+            if point-100 > self.__checkpoint+1:
+                pass
+            elif point-100 > self.__checkpoint:
+                return
 
         #We now compute the Kart to object vector in the Kart frame
         obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.__orientation) - obj_vec[1]*np.sin(-1*self.__orientation), obj_vec[0]*np.sin(-1*self.__orientation) + obj_vec[1] * np.cos(-1*self.__orientation)])
@@ -512,7 +529,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         #If the point is inside that ellipse, we'll delete it, as long as it isn't the last point. 
         if (obj_vec_K[0]**2/(dist_min_x**2) + obj_vec_K[1]**2/(dist_min_y**2)<= 1) and (p!=self.path[-1]):
             self.path.remove(p)
-            #print('removed :',p)
 
     def create_map(self,useable_array):
         self.map = useable_array

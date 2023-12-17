@@ -3,7 +3,6 @@ import logging
 from track import BLOCK_SIZE
 import time
 
-
 logger = logging.getLogger('MariooCarteLogger')
 
 
@@ -68,7 +67,10 @@ def mapping(track_string,ini_pos):
     track_array = [[char_mapping[char] for char in line] for line in track_lines]
 
     # Convert the list of lists to a NumPy array
-    track_array = np.array(track_array, dtype=np.uint8)
+    try:
+        track_array = np.array(track_array, dtype=np.uint8)
+    except ValueError:
+        logger.error("The track array could not be computed. \n pThis is likely caused by a non rectangular track string. \n Please check the provided track string for any missing characters, and try again. \n If this problem is not resolved, contact your system administrator.")
 
     char_mapping_apex = {'R': 255, 'G': 0, 'C':255, 'D':255, 'B':255, 'E':255, 'F':255, 'L':0}
 
@@ -127,26 +129,31 @@ def mapping(track_string,ini_pos):
     useable_track = np.repeat(np.repeat(track_final,BLOCK_SIZE,axis=0),BLOCK_SIZE,axis=1)
 
 
-    #### A*
+    #### A* 
 
     # Start and goal positions
     start = (int(ini_pos[0]),int(ini_pos[1]))
 
+    cp_positions = []
 
-    cp1_pos = np.argwhere(track_array == 101)
-    cp2_pos = np.argwhere(track_array == 102)
-    cp3_pos = np.argwhere(track_array == 103)
-    cp4_pos = np.argwhere(track_array == 104)
+    for i in range(4):        
+        cp_positions.append(np.argwhere(track_array == 101+i))
+        if (len(cp_positions[-1])):
+            if np.linalg.norm(np.var(cp_positions[-1], 0)) > 10:
+                logger.warn("\n\n\n\n\n\n\nWARNING\n CP%i has been detected to have very spaced apart points. \n This could lead to detrimental AI performance. \n This may be an error, so this will not stop code execution. \n The computed variance for that checkpoint was %f. Code wil resume execution in 3 seconds. \n\n\n\n\n\n\n", i+1, np.linalg.norm(np.var(cp_positions[-1], 0)))
+                time.sleep(3)
 
     cp=np.array([[0.,0.],[0.,0.],[0.,0.],[0.,0.],[0.,0.]])
 
-    cp[0] = start
-    cp[1] = (np.mean(cp1_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp1_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
-    cp[2] = (np.mean(cp2_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp2_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
-    cp[3] = (np.mean(cp3_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp3_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
-    cp[4] = (np.mean(cp4_pos[:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp4_pos[:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+    nbr_cp = 4 - (int(not len(cp_positions[0])) + int(not len(cp_positions[1]))+ int(not len(cp_positions[2]))+ int(not len(cp_positions[3])))
 
-    nbr_cp = (int(not np.any(np.isnan(cp[1]))) + int(not np.any(np.isnan(cp[2])))+ int(not np.any(np.isnan(cp[3])))+ int(not np.any(np.isnan(cp[4]))))
+    cp[0] = start
+
+    for i in range(nbr_cp):
+        cp[i+1] = (np.mean(cp_positions[i][:,0])*BLOCK_SIZE + BLOCK_SIZE/2., np.mean(cp_positions[i][:,1])*BLOCK_SIZE + BLOCK_SIZE/2.)
+        logger.debug("Standard deviation cp%i: %s", i, np.linalg.norm(np.var(cp_positions[i], 0)))
+
+    # nbr_cp = (int(not np.any(np.isnan(cp[1]))) + int(not np.any(np.isnan(cp[2])))+ int(not np.any(np.isnan(cp[3])))+ int(not np.any(np.isnan(cp[4]))))
 
     logger.debug("NBR CP %i", nbr_cp)
     
@@ -160,13 +167,19 @@ def mapping(track_string,ini_pos):
         logger.info("Going to CP%i", i+1)
         start = (int(cp[i][0]), int(cp[i][1]))
         goal = (int(cp[i+1][0]), int(cp[i+1][1]))
-        path += (astar(useable_track, start, goal, block_costs))
         logger.debug(goal)
+        try:
+            path += (astar(useable_track, start, goal, block_costs))
+        except KeyboardInterrupt:
+            logger.error("\n\n\n\n\n\n\nOperation aborted by user.")
+            exit()
+        except:
+            logger.error("\n\n\n\n\n\n\nASTAR COULD NOT COMPUTE PATH TO THIS CP.")
 
     if path:
         logger.info("PATH FOUND")
     else:
-        logger.error("NO PATH FOUND")
+        logger.error("\n\n\n\n\n\n\nNO PATH FOUND")
 
     ###Adding A* info to the map
 

@@ -16,6 +16,8 @@ class AI(Controller):
     def __init__(self, string, pos_ini, angle_ini):
         super().__init__()
         self.is_ai = True
+        self.initial_position = pos_ini
+        self.initial_angle = angle_ini
         self.__ai = AI_PARSE(string, pos_ini, angle_ini)
         if AI_PARSE.need_to_map:
             self.__ai.parse()
@@ -39,7 +41,7 @@ class AI(Controller):
         return keys
     
     def reset(self, step=0):
-        super(AI, self.__class__).step.fset(self, step)
+        super(AI, self.__class__).step.fset(self, step+1)
     
 
         

@@ -1,9 +1,27 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+import pygame
+import track
+import logging
 
-class Block(ABC):
+logger = logging.getLogger('MariooCarteLogger')
 
+class Block():
+
+    nbr_of_blocks = 0
+    track_texture = None
+
+    @property
+    def block_id(self):
+        return self.__block_id
+    
+    @property
+    def rect(self):
+        return self.__rect
+    
     def __init__(self,x,y) -> None:
-        self.__rect = None
+        self.__rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
+        self.__block_id = Block.nbr_of_blocks
+        Block.nbr_of_blocks += 1
         pass
 
     @property
@@ -11,6 +29,14 @@ class Block(ABC):
     def surface_type_(self) -> float:
         pass
 
-    @abstractmethod
     def draw(self, screen) -> None:
+        if (self.__block_id == 0 and not (Block.track_texture is None)):
+            screen.blit(Block.track_texture, (0,0))
+            return
+        
+        if (self.__block_id == Block.nbr_of_blocks-1 and Block.track_texture is None):
+            pygame.image.save(screen, "textures/track.png")
+            Block.track_texture = pygame.image.load("textures/track.png").convert()
+            logger.info("Saved track image")
+            pass
         pass

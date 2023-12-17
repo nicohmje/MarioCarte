@@ -107,8 +107,6 @@ class AI_PARSE():
             
             self.kart = Kart(AI_PARSE.path)
 
-            print("ihaDBEIUduib")
-
             logger.debug("TRACK ARRAY %s", AI_PARSE.track[140:145,153:158])
 
             self.kart.create_map(AI_PARSE.track)
@@ -132,6 +130,13 @@ class AI_PARSE():
         distance = 0
 
         turning_left, turning_right = False, False
+
+        cp_positions = []
+        for i in range(4):        
+            cp_positions.append(np.argwhere(AI_PARSE.track == 101+i))
+
+        nbr_cp = 4 - (int(not len(cp_positions[0])) + int(not len(cp_positions[1]))+ int(not len(cp_positions[2]))+ int(not len(cp_positions[3])))
+
 
         while (not(success)):
             
@@ -253,6 +258,7 @@ class AI_PARSE():
             
 
             
+            logger.debug("STEP %i", step)
             logger.debug("POS X %i, POS Y %i", cur_pos_x,cur_pos_y)  
             logger.debug("POINT %i, CURRENT VEL %f", current_point, np.linalg.norm(self.kart.velocity))
 
@@ -377,7 +383,7 @@ class AI_PARSE():
             y_ = (np.copy(self.kart.position[1]))
             # x.append(-1*self.kart.position[0])
             # y.append(self.kart.position[1])
-            if self.kart.map[int(x_)][int(y_)]==104:
+            if self.kart.checkpoint==nbr_cp:
                 success = True
                 logger.info('Successfully finished the map')
                 break
