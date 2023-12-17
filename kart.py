@@ -113,7 +113,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__start_time = time.time_ns()
         self.__end_time = 0.0
 
-        self.__char_map = np.empty((100,100), dtype=str)
+        self.__char_map = np.empty((10000,10000), dtype=str)
 
         self.__initialized = False
 
@@ -123,18 +123,18 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         pass
        
-    def reset(self, position, orientation, step=0):
-        self.__position = np.copy(position)
-        self.__orientation = np.copy(orientation)   
+    def reset(self, initial_position, initial_orientation, step=0):
+        self.__position = np.copy(initial_position)
+        self.__orientation = np.copy(initial_orientation)
         self.__velocity = np.array([0.,0.], dtype=float)
         self.__acceleration_c = 0
         self.__acceleration = 0
         if self.__initialized and not np.isnan(step):
             self.__controller.reset(step)
             self.__checkpoint_pos = np.copy(self.controller.initial_position)
-            self.__checkpoint_orient = np.copy(self.controller.initial_angle)
             self.__position = np.copy(self.controller.initial_position)
             self.__orientation = np.copy(self.controller.initial_angle)
+            self.__checkpoint_orient = np.copy(self.controller.initial_angle)
             # time.sleep(4)
         pass
         
@@ -264,13 +264,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                         pass
                     elif cur_checkpoint == self.__checkpoint_nbr:
 
-                        self.__has_finished = True
+                        self.__has_finished = False
 
                         #time_took = self.__end_time - self.__start_time
                         if (self.controller.step < self.__best_time or self.__best_time == 0):
                             self.__best_time = self.controller.step
 
-                        # logger.info("Finished in %i steps", self.controller.step)
+                        logger.info("Finished in %i steps", self.controller.step)
                         #self.__start_time = time.time_ns()
                         self.reset(self.controller.initial_position, self.controller.initial_angle, -1)
                         self.__checkpoint = 0
@@ -451,13 +451,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__input = 0 
 
-    def check_radar_speed(self,delta):
+    def check_radar_speed(self,delta, safe_mode):
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.__velocity))
         if abs(delta) < 0.2 and (np.linalg.norm(self.__velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.__velocity) >= 15.:
+        elif np.linalg.norm(self.__velocity) >= (15.,5.)[safe_mode]:
             braking = True
             return braking
         elif abs(delta) > 1.2:
@@ -527,12 +527,12 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         obj_vec = np.array([px - self.__position[0], py - self.__position[1]]) #Kart to object
 
         X = np.array(self.__position, dtype=np.int16)
-        # point = self.map[int(px)][int(py)]
-        # if point >= 101 and point <=104:
-        #     if point-100 > self.__checkpoint+1:
-        #         pass
-        #     elif point-100 > self.__checkpoint:
-        #         return
+        point = self.map[int(px)][int(py)]
+        if point >= 101 and point <=104:
+            if point-100 > self.__checkpoint+1:
+                pass
+            elif point-100 > self.__checkpoint:
+                return
 
         #We now compute the Kart to object vector in the Kart frame
         obj_vec_K = np.array([obj_vec[0] * np.cos(-1*self.__orientation) - obj_vec[1]*np.sin(-1*self.__orientation), obj_vec[0]*np.sin(-1*self.__orientation) + obj_vec[1] * np.cos(-1*self.__orientation)])
