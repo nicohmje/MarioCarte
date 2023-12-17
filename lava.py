@@ -7,7 +7,7 @@ import track
 
 class Lava(Block):  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
-    __color = (159, 45, 32)
+    # __color = (159, 45, 32)
     sound = None
     Lava_texture = None
 
@@ -30,7 +30,7 @@ class Lava(Block):  # Vous pouvez ajouter des classes parentes
         
 
         if (Block.track_texture is None):
-            screen.blit(Lava.Lava_texture, self.rect)
+            screen.blit(Lava.Lava_texture, self._rect)
         super().draw(screen)
         
         pass

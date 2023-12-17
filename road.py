@@ -6,7 +6,7 @@ from block import Block
 
 class Road(Block):  # Vous pouvez ajouter des classes parentes
     __surface_type = 0.02
-    __color = (33, 41, 48)
+    __color = (33, 25, 48)
     sound = None
 
     @classmethod
@@ -20,7 +20,7 @@ class Road(Block):  # Vous pouvez ajouter des classes parentes
     def draw(self, screen):
 
         if (Block.track_texture is None):
-            pygame.draw.rect(screen, Road.__color, self.rect)  
+            pygame.draw.rect(screen, Road.__color, self._rect)  
 
         super().draw(screen)
         pass

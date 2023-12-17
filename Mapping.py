@@ -70,8 +70,8 @@ def mapping(track_string,ini_pos):
     try:
         track_array = np.array(track_array, dtype=np.uint8)
     except ValueError:
-        logger.error("The track array could not be computed. \n pThis is likely caused by a non rectangular track string. \n Please check the provided track string for any missing characters, and try again. \n If this problem is not resolved, contact your system administrator.")
-
+        logger.error("\n\n\n\n\n\n\n\n\n\nThe track array could not be computed. \n This is likely caused by a non rectangular track string. \n Please check the provided track string for any missing characters, and try again. \n If this problem is not resolved, contact your system administrator.\n\n\n\n\n")
+        exit()
     char_mapping_apex = {'R': 255, 'G': 0, 'C':255, 'D':255, 'B':255, 'E':255, 'F':255, 'L':0}
 
     # Split the track string into lines and create a list of lists

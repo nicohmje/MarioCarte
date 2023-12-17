@@ -2,7 +2,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 # from typing import NamedTuple
 # import random
-# import time
+import time
 # import math
 from Mapping import mapping
 from kart import Kart
@@ -116,7 +116,7 @@ class AI_PARSE():
 
         
 
-    def parse(self):
+    def parse(self, safe_mode):
 
         logger.info("STARTED FINDING PATH FOR AI")
         success = False
@@ -128,6 +128,7 @@ class AI_PARSE():
         lava_pos_r = ()
         intersect = False
         distance = 0
+
 
         turning_left, turning_right = False, False
 
@@ -233,7 +234,7 @@ class AI_PARSE():
                 delta =  2*np.pi + delta 
 
 
-            braking = self.kart.check_radar_speed(delta)
+            braking = self.kart.check_radar_speed(delta, safe_mode)
 
 
 
@@ -294,7 +295,7 @@ class AI_PARSE():
                 lava_vector = np.array([(lava_pos[0]-cur_pos_x), (lava_pos[1]-cur_pos_y)])
                 distance = np.linalg.norm(lava_vector)
 
-                angle_to_lava = np.arccos(np.dot(self.kart.velocity, lava_vector)/ (velocity_norm * distance))
+                angle_to_lava = np.arccos(np.dot(self.kart.velocity, lava_vector)/ ((velocity_norm * distance)+1e-3))
 
                 if abs(angle_to_lava)>1.75:
                     logger.debug("ANGLE TO LAVA: %f", angle_to_lava)
@@ -352,6 +353,14 @@ class AI_PARSE():
                 logger.debug("CHOICE7 %f", delta)
 
             
+            # if (safe_mode):
+            #     if (angle_to_lava > 0. and angle_to_lava < 1.5) or oob_left:
+            #         braking = True
+            #         delta = -1.
+            #     elif (angle_to_lava < 0. and angle_to_lava > -1.5) or oob_right:
+            #         braking = True
+            #         delta = 1.
+            
 
 
             if np.abs(delta) > 0.03:
@@ -388,10 +397,12 @@ class AI_PARSE():
                 logger.info('Successfully finished the map')
                 break
             elif self.kart.map[int(x_)][int(y_)] == 10:
-                logger.info("LAVA")
-                # time.sleep(2)
+                self.kart.reset(self.kart.checkpoint_pos, self.kart.checkpoint_orient, step=np.NaN)
+                logger.info("RESET")
+                time.sleep(2)
 
-            
+            # if step>472 and safe_mode:
+            #     time.sleep(0.5)
             step +=1
         
         np.save('ai_files/ai_commands.npy', np.array(self.command))

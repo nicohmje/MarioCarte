@@ -10,16 +10,12 @@ class Block():
     nbr_of_blocks = 0
     track_texture = None
 
-    @property
-    def block_id(self):
-        return self.__block_id
-    
-    @property
-    def rect(self):
-        return self.__rect
+    # @property
+    # def block_id(self):
+    #     return self._block_id
     
     def __init__(self,x,y) -> None:
-        self.__rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
+        self._rect = pygame.Rect(x, y, track.BLOCK_SIZE, track.BLOCK_SIZE)
         self.__block_id = Block.nbr_of_blocks
         Block.nbr_of_blocks += 1
         pass

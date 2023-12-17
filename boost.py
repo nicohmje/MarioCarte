@@ -28,12 +28,13 @@ class Boost(Block):  # Vous pouvez ajouter des classes parentes
             Boost.sound = pygame.mixer.Sound("sounds/boost.wav")
 
         if (Boost.Boost_texture is None):
-            Boost.Boost_texture = pygame.image.load("textures/boost.png").convert()
+            Boost.Boost_texture = pygame.image.load("textures/boost.png").convert_alpha()
             Boost.Boost_texture = pygame.transform.scale(Boost.Boost_texture, (track.BLOCK_SIZE, track.BLOCK_SIZE))
         
 
         if (Block.track_texture is None):
-            screen.blit(Boost.Boost_texture, self.rect)
+            pygame.draw.rect(screen, (33, 25, 48), self._rect)  
+            screen.blit(Boost.Boost_texture, self._rect)
 
         super().draw(screen)
         

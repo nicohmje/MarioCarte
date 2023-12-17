@@ -63,6 +63,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         return self.__position
     
     @property 
+    def checkpoint_pos(self):
+        return self.__checkpoint_pos
+    @property 
+    def checkpoint_orient(self):
+        return self.__checkpoint_orient
+    
+    @property 
     def velocity(self):
         return self.__velocity
     
@@ -90,7 +97,6 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__position = np.array([0.,0.], dtype=float)       
         self.__orientation = 0
-
         self.__velocity = np.array([0.,0.], dtype=float)
 
         self.__acceleration = 0
@@ -107,7 +113,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         self.__start_time = time.time_ns()
         self.__end_time = 0.0
 
-        self.__char_map = np.empty((10000,10000), dtype=str)
+        self.__char_map = np.empty((100,100), dtype=str)
 
         self.__initialized = False
 
@@ -118,13 +124,15 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         pass
        
     def reset(self, initial_position, initial_orientation, step=0):
-        self.__position = np.copy(initial_position)
-        self.__orientation = np.copy(initial_orientation)        
+        self.__position = (np.copy(initial_position),np.copy(self.controller.initial_position))[not np.isnan(step)]
+        self.__orientation = (np.copy(self.controller.initial_angle),np.copy(initial_orientation))[np.isnan(step)]        
         self.__velocity = np.array([0.,0.], dtype=float)
         self.__acceleration_c = 0
         self.__acceleration = 0
-        if self.__initialized:
+        if self.__initialized and not np.isnan(step):
             self.__controller.reset(step)
+            self.__checkpoint_pos = np.copy(self.controller.initial_position)
+            self.__checkpoint_orient = np.copy(self.controller.initial_angle)
             # time.sleep(4)
         pass
         
@@ -197,7 +205,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                     i = 0
                 else:
                     i += 1
-            self.__char_map = self.__char_map[0:i+1, 0:j+1]
+            # print(np.shape(self.__char_map))
+            # self.__char_map = np.resize(self.__char_map, (i+1, j+1))
+            # print(np.shape(self.__char_map))
             pygame.mixer.music.load("sounds/grass.wav")
 
         if Kart.__started:
@@ -243,7 +253,7 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 case 76: #ASCII FOR L
                     pygame.mixer.Sound.play(Lava.sound)
                     f = Checkpoint.surface_type_()
-                    self.reset(np.array(self.__checkpoint_pos), self.__checkpoint_orient, self.__checkpoint_step)
+                    self.reset(np.array(self.__checkpoint_pos), self.__checkpoint_orient, np.nan)
 
                 case 67|68|69|70:
                     f = Checkpoint.surface_type_()
@@ -318,15 +328,15 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
 
             #Bound the position to the screen. Account for the position being the top left of the rectangle. Adapt if switching from rec to pic maybe.
-            if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]-20.):
+            if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < Kart.__screen_size[0]):
                 self.__position[0] += self.__velocity[0]
             else:
-                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
                 return
-            if (self.__position[1] + self.__velocity[1]>1 and self.__position[1] + self.__velocity[1] < Kart.__screen_size[1]-20):
+            if (self.__position[1] + self.__velocity[1]>0. and self.__position[1] + self.__velocity[1] < Kart.__screen_size[1]):
                 self.__position[1] = self.__position[1] + self.__velocity[1]
             else:
-                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, self.__checkpoint_step)
+                self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
                 return
             
             
@@ -439,13 +449,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__input = 0 
 
-    def check_radar_speed(self,delta):
+    def check_radar_speed(self,delta, safe_mode):
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.__velocity))
         if abs(delta) < 0.2 and (np.linalg.norm(self.__velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.__velocity) >= 15.:
+        elif np.linalg.norm(self.__velocity) >= (15.,5.)[safe_mode]:
             braking = True
             return braking
         elif abs(delta) > 1.2:
@@ -484,6 +494,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
                 pass
             elif point-100 > self.__checkpoint:
                 self.__checkpoint = point-100
+                self.__checkpoint_pos = np.copy(self.__position)
+                self.__checkpoint_orient = np.copy(self.__orientation)
 
             return 'ap',boosting, f 
 
@@ -544,15 +556,20 @@ class Kart():  # Vous pouvez ajouter des classes parentes
         else:
                 self.__velocity = (BOOST_SPEED * np.cos(self.__orientation), BOOST_SPEED*np.sin(self.__orientation))
                         
-        if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < np.shape(self.__char_map)[0]):
+        if (self.__position[0] + self.__velocity[0]>0. and self.__position[0] + self.__velocity[0] < np.shape(self.map)[0]):
                 self.__position[0] += self.__velocity[0]
         else:
-            pass
+            self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
+            logger.warn("Exited boundary")
+            # raise Exception("Exited boundary")
         
-        if (self.__position[1] + self.__velocity[1]>0 and self.__position[1] + self.__velocity[1] < np.shape(self.__char_map)[1]-20):
+        if (self.__position[1] + self.__velocity[1]>0. and self.__position[1] + self.__velocity[1] < np.shape(self.map)[1]):
             self.__position[1] = self.__position[1] + self.__velocity[1]
         else:
-            pass
+            self.reset(self.__checkpoint_pos, self.__checkpoint_orient, np.NaN)
+            logger.warn("Exited boundary")
+            # raise Exception("Exited boundary")
+
 
         logger.debug("MAP SIZE: %s", np.shape(self.__char_map))
 

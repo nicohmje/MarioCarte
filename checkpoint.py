@@ -50,15 +50,15 @@ class Checkpoint(Block):  # Vous pouvez ajouter des classes parentes
         if (Block.track_texture is None):
             match self.id:
                 case Checkpoint.__nbr_of_checkpoints:
-                    screen.blit(Checkpoint.finish_texture[-1], self.rect)
+                    screen.blit(Checkpoint.finish_texture[-1], self._rect)
                 case 0:
-                    screen.blit(Checkpoint.finish_texture[0], self.rect)
+                    screen.blit(Checkpoint.finish_texture[0], self._rect)
                 case 1:
-                    screen.blit(Checkpoint.finish_texture[1], self.rect)
+                    screen.blit(Checkpoint.finish_texture[1], self._rect)
                 case 2: 
-                    screen.blit(Checkpoint.finish_texture[2], self.rect)
+                    screen.blit(Checkpoint.finish_texture[2], self._rect)
                 case _:
-                    pygame.draw.rect(screen, self.__color, self.rect) 
+                    pygame.draw.rect(screen, self.__color, self._rect) 
 
         super().draw(screen)
 

@@ -210,17 +210,7 @@ class Track(object):
             compteur += 1
 
 
-            ##CUSTOM
-            framerate.append(1/((time.time_ns() - start_loop)*1e-9))
-            if len(framerate) == 0:
-                framerate.append(1)
-            if (not compteur%100):
-                logger.info("%d FPS ", np.mean(framerate))
-                framerate = []
-
-
         logger.info("Fini en %i etapes", compteur)
-        logger.info("Framerate : %d", np.mean(framerate)) ##CUSTOM
 
         # On ferme la fenetre a la fin du circuit
         pygame.quit()

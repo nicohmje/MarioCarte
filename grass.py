@@ -36,7 +36,7 @@ class Grass(Block):
             Grass.sound = pygame.mixer.Sound("sounds/grass.wav")
 
         if (Block.track_texture is None):
-            screen.blit(Grass.grass_texture, self.rect)
+            screen.blit(Grass.grass_texture, self._rect)
             # pygame.draw.rect(screen, self.color, self.rect)    
             pass
 
