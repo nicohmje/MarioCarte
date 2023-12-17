@@ -5,7 +5,7 @@ from kart import Kart
 import logging
 
 
-logging.basicConfig(level=logging.INFO, format='%(filename)s -  %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(filename)s -  %(levelname)s - %(message)s')
 logger = logging.getLogger('MariooCarteLogger')
 
 
@@ -27,29 +27,33 @@ logger = logging.getLogger('MariooCarteLogger')
 # GGGGGGGGGGGGGGGGGGGGGGGGGG"""
 
 string = """GGGGGGGGGGGGGGGGGGGGGGGGGG
-GRRRRRRFRRRRRRRRRBRRRRRRRG
-GRRRRRRFRRRRRRRRRBRRRRRRRG
-GRRRRRRFRRRRRRRRRRRRRRRRRG
-GRRRRRRFRRRRRRRRRRRRRRRRRG
+GRRRRRRCRRRRRRRRRBRRRRRRRG
+GRRRRRRCRRRRRRRRRBRRRRRRRG
+GRRRRRRCRRRRRRRRRRRRRRRRRG
+GRRRRRRCRRRRRRRRRRRRRRRRRG
 GGGGGGGGGGGGGGGGGGGGGRRRRG
 GGGGGGGGGGGGGGGGGGGGGRRRRG
 GRRRRGGGGGGGGGGGGGGGGRRRRG
-GCCRRGGGGGGGGGGGGGGGGRRRRG
+GFFRRGGGGGGGGGGGGGGGGRRRRG
 GLRRRGGGGGGGGGGGGGGGGRRRRG
 GRRRRGGGGGGGGGGGGGGGGDDDDG
-GRRRRRERRRRRBRRRRRRRRRRRLG
-GRRRRRERRRRRBRRRRRRRRRRRRG
-GLRRRRERRRRRGGRRRRRRRRRRRG
-GLLRRRERRRRRGGRRRRRRRRRRRG
+GRRRRRERRRRRRRBRRRRRRRRLLG
+GRRRRRERRRRRRRBRRRRRRRRRRG
+GLRRRRERRRRRGGBRRRRRRRRRRG
+GLLRRRERRRRRGGBRRRRRRRRRRG
 GGGGGGGGGGGGGGGGGGGGGGGGGG"""
-
 
 # La position et l'orientation initiale du kart
 initial_position = [150., 150.]
 initial_angle = 0.
 
+
+# # La position et l'orientation initiale du kart
+# initial_position = [150., 150.]
+# initial_angle = 0.
+
 controller_2 =  AI(string, initial_position, initial_angle)  # ou AI()
-controller_2 = Human(initial_position, initial_angle)
+# controller_2 = Human(initial_position, initial_angle)
 """
 ==================== ATTENTION =====================
 Vous ne devez pas modifier ces quatre lignes de code 

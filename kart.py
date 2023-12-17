@@ -123,9 +123,9 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         pass
        
-    def reset(self, initial_position, initial_orientation, step=0):
-        self.__position = (np.copy(initial_position),np.copy(self.controller.initial_position))[not np.isnan(step)]
-        self.__orientation = (np.copy(self.controller.initial_angle),np.copy(initial_orientation))[np.isnan(step)]        
+    def reset(self, position, orientation, step=0):
+        self.__position = np.copy(position)
+        self.__orientation = np.copy(orientation)   
         self.__velocity = np.array([0.,0.], dtype=float)
         self.__acceleration_c = 0
         self.__acceleration = 0
@@ -133,6 +133,8 @@ class Kart():  # Vous pouvez ajouter des classes parentes
             self.__controller.reset(step)
             self.__checkpoint_pos = np.copy(self.controller.initial_position)
             self.__checkpoint_orient = np.copy(self.controller.initial_angle)
+            self.__position = np.copy(self.controller.initial_position)
+            self.__orientation = np.copy(self.controller.initial_angle)
             # time.sleep(4)
         pass
         
@@ -449,13 +451,13 @@ class Kart():  # Vous pouvez ajouter des classes parentes
 
         self.__input = 0 
 
-    def check_radar_speed(self,delta, safe_mode):
+    def check_radar_speed(self,delta):
         braking = False
         radar_readings = []
         range_points = 10*int(np.linalg.norm(self.__velocity))
         if abs(delta) < 0.2 and (np.linalg.norm(self.__velocity) < 13.):
             return braking
-        elif np.linalg.norm(self.__velocity) >= (15.,5.)[safe_mode]:
+        elif np.linalg.norm(self.__velocity) >= 15.:
             braking = True
             return braking
         elif abs(delta) > 1.2:

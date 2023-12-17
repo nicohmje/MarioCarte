@@ -20,21 +20,14 @@ class AI(Controller):
         self.initial_angle = angle_ini
         self.__ai = AI_PARSE(string, pos_ini, angle_ini)
         if AI_PARSE.need_to_map:
-            # try:
-            self.__ai.parse(False)
-            # except Exception:
-            #     logger.warn("AI Parsing failed. Trying again in safe mode.")
-            #     try:
-            #         self.__ai.parse(True)
-            #     except:
-            #         logger.error("Failed to find correct commands for the Kart. Exiting.")
-            #         exit()
-            # except KeyboardInterrupt:
-            #     logger.error("AI Parsing interrupted by user. Exiting.")
-            #     exit()
-            # except:
-            #     logger.error("Failed to find correct commands for the Kart. Exiting.")
-            #     exit()
+            try:
+                self.__ai.parse()
+            except KeyboardInterrupt:
+                logger.error("AI Parsing interrupted by user. Exiting.")
+                exit()
+            except:
+                logger.error("Failed to find correct commands for the Kart. Exiting.")
+                exit()
         else:
             logger.debug("No need to map")
 

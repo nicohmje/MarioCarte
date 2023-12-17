@@ -116,7 +116,7 @@ class AI_PARSE():
 
         
 
-    def parse(self, safe_mode):
+    def parse(self):
 
         logger.info("STARTED FINDING PATH FOR AI")
         success = False
@@ -234,7 +234,7 @@ class AI_PARSE():
                 delta =  2*np.pi + delta 
 
 
-            braking = self.kart.check_radar_speed(delta, safe_mode)
+            braking = self.kart.check_radar_speed(delta)
 
 
 
@@ -351,16 +351,7 @@ class AI_PARSE():
             elif (current_point  < 100): 
                 delta += (+0.3, -0.3)[pos_future_rotated_point<neg_future_rotated_point]
                 logger.debug("CHOICE7 %f", delta)
-
-            
-            # if (safe_mode):
-            #     if (angle_to_lava > 0. and angle_to_lava < 1.5) or oob_left:
-            #         braking = True
-            #         delta = -1.
-            #     elif (angle_to_lava < 0. and angle_to_lava > -1.5) or oob_right:
-            #         braking = True
-            #         delta = 1.
-            
+        
 
 
             if np.abs(delta) > 0.03:
@@ -400,9 +391,6 @@ class AI_PARSE():
                 self.kart.reset(self.kart.checkpoint_pos, self.kart.checkpoint_orient, step=np.NaN)
                 logger.info("RESET")
                 time.sleep(2)
-
-            # if step>472 and safe_mode:
-            #     time.sleep(0.5)
             step +=1
         
         np.save('ai_files/ai_commands.npy', np.array(self.command))
